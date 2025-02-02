@@ -3,12 +3,14 @@ import WaveAnimation from "./WaveAnimation"; // Import WaveAnimation component
 
 const Hero = () => {
   return (
-    <section className="relative h-screen flex flex-col items-center justify-center text-center text-white bg-black overflow-hidden">
+    <section className="relative h-screen flex flex-col items-center justify-center text-center text-white overflow-hidden">
       {/* Wave Background */}
-      <WaveAnimation />
+      <WaveAnimation duration={1} />
+      <WaveAnimation duration={3} />
+      <WaveAnimation duration={10} />
 
       {/* Overlay for better text visibility */}
-      <div className="absolute inset-0 bg-black bg-opacity-60"></div>
+      <div className="absolute inset-0"></div>
 
       {/* Hero Content (Above Background) */}
       <div className="relative z-10 flex flex-col items-center">
