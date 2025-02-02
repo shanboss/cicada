@@ -18,7 +18,7 @@ const Hero = () => {
           Electronic Music Society at UTD
         </p>
         <div className="my-4">
-          <PrimaryButton label={"Join Us"} link={"/membership"} size="lg" />
+          <PrimaryButton label={"Join Us"} link={"/signup"} size="lg" />
         </div>
       </div>
     </section>
