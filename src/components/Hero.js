@@ -15,7 +15,7 @@ const Hero = () => {
         <img src="/logo.jpeg" alt="Cicada Logo" className="w-32 h-32 mb-4" />
         <h1 className="text-6xl font-extrabold">CICADA</h1>
         <p className="text-xl mt-4 text-gray-300">
-          Electronic Music Society for Students
+          Electronic Music Society at UTD
         </p>
         <div className="my-4">
           <PrimaryButton label={"Join Us"} link={"/membership"} size="lg" />

@@ -11,7 +11,7 @@ const Membership = () => {
         Join Cicada and be part of an incredible electronic music community.
       </p>
       <div className="my-4">
-        <PrimaryButton label={"Join Us Now"} link={"/"} size="lg" />
+        <PrimaryButton label={"Join Us Now"} link={"/signup"} size="lg" />
       </div>
     </section>
   );
