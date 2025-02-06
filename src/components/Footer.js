@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const Footer = () => {
   return (
     <footer className="py-6 bg-gray-900 text-white text-center">
@@ -14,6 +16,9 @@ const Footer = () => {
         <a href="#" className="hover:text-blue-500">
           Facebook
         </a>
+        <Link href="/admin" className="hover:text-blue-500">
+          Admin
+        </Link>
       </div>
     </footer>
   );

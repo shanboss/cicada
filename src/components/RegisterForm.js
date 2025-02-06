@@ -20,6 +20,7 @@ export default function RegisterForm() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    console.log("this changed");
   };
 
   const handleSubmit = async (e) => {
@@ -29,19 +30,25 @@ export default function RegisterForm() {
 
     const { email, firstName, lastName, subscribed } = formData;
 
+    // Validate Email Format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage("Invalid email address! Please enter a valid email. 🚫");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Insert the new user into the Supabase database
+      // Insert into Supabase
       const { error } = await supabase
-        .from("users")
+        .from("subscribers")
         .insert([
           { email, first_name: firstName, last_name: lastName, subscribed },
         ]);
 
-      // Handle Supabase errors
       if (error) {
         if (error.code === "23505") {
-          // 23505 is the unique constraint violation error
-          setMessage("This email is already registered!");
+          setMessage("This email is already registered! 🚫");
         } else {
           console.error("Supabase Insert Error:", error.message);
           setMessage("Error: " + error.message);
@@ -50,7 +57,20 @@ export default function RegisterForm() {
         return;
       }
 
-      setMessage("Successfully registered!");
+      // Send welcome email
+      const emailResponse = await fetch("/api/sendEmail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, firstName }),
+      });
+
+      if (emailResponse.ok) {
+        setMessage("Successfully registered! 🎉 Check your email.");
+      } else {
+        const errorData = await emailResponse.json();
+        console.error("Email Error:", errorData.error);
+        setMessage("Registered, but failed to send email.");
+      }
     } catch (err) {
       console.error("Unexpected Error:", err);
       setMessage("An unexpected error occurred. Please try again.");
