@@ -30,7 +30,7 @@ const Events = () => {
     fetchEvents();
   }, []);
   return (
-    <section id="events" className="py-16 px-6 bg-black text-white">
+    <section id="events" className="px-6 bg-black text-white">
       <h2 className="text-4xl font-bold text-center">Upcoming Events</h2>
       <div className="mt-6 max-w-3xl mx-auto space-y-6">
         {events.map((event, index) => (

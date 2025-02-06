@@ -144,7 +144,7 @@ export default function AdminDashboard() {
           {/* Add Event Button & Modal */}
           <div className="mt-6">
             <AddEvent onEventAdded={fetchEvents} />
-          </div>
+          </div> 
 
           {/* Events List */}
           <div className="mt-8 w-full max-w-2xl">

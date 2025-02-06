@@ -43,21 +43,33 @@ const Navbar = () => {
         {/* Desktop Menu */}
         <ul className="hidden md:flex space-x-6 items-center">
           <li>
-            <Link href="#about" className="hover:text-gray-400">
+            <Link
+              href="/about"
+              className="hover:text-gray-400"
+              onClick={() => setIsOpen(false)}
+            >
               About
             </Link>
           </li>
           <li>
-            <Link href="#events" className="hover:text-gray-400">
+            <Link
+              href="/events"
+              className="hover:text-gray-400"
+              onClick={() => setIsOpen(false)}
+            >
               Events
             </Link>
           </li>
           <li>
-            <Link href="#gallery" className="hover:text-gray-400">
+            <Link
+              href="/gallery"
+              className="hover:text-gray-400"
+              onClick={() => setIsOpen(false)}
+            >
               Gallery
             </Link>
           </li>
-          <li>
+          <li onClick={() => setIsOpen(false)}>
             <PrimaryButton label={"Join Now"} link={"/signup"} />
           </li>
         </ul>
@@ -90,7 +102,7 @@ const Navbar = () => {
         <ul className="flex flex-col space-y-4 mt-6 px-6">
           <li>
             <Link
-              href="#about"
+              href="/about"
               className="hover:text-gray-400"
               onClick={() => setIsOpen(false)}
             >
@@ -99,7 +111,7 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              href="#events"
+              href="/events"
               className="hover:text-gray-400"
               onClick={() => setIsOpen(false)}
             >
@@ -108,7 +120,7 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              href="#gallery"
+              href="/gallery"
               className="hover:text-gray-400"
               onClick={() => setIsOpen(false)}
             >
