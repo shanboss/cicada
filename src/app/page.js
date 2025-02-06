@@ -13,7 +13,9 @@ export default function Home() {
     <div className="bg-black text-white">
       <Hero />
       <WaveAnimation />
+      <About />
       <Events />
+      <Gallery />
       <Membership />
     </div>
   );
