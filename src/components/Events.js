@@ -39,7 +39,7 @@ const Events = () => {
             key={index}
             className="p-4 border border-gray-700 rounded-lg flex justify-between items-center"
           >
-            <div>
+            <div className="flex flex-col gap-y-2">
               <h3 className="text-xl font-semibold">{event.event_title}</h3>
               <p className="text-gray-400">{event.location}</p>
               <p className="text-gray-400">{event.desc}</p>
@@ -49,15 +49,16 @@ const Events = () => {
                   minute: "2-digit",
                   hour12: true,
                 })}
-              </p>{" "}
+                <span className="text-gray-300 bg-gray-800 px-4 py-2 rounded-full mx-2">
+                  {event.date}
+                </span>
+              </p>
             </div>
-            <span className="text-gray-300 bg-gray-800 px-4 py-2 rounded-full">
-              {event.date}
-            </span>
+
             <script async src="https://js.stripe.com/v3/buy-button.js"></script>
 
             <stripe-buy-button
-              buy-button-id="buy_btn_1QzZbCLp1OI919OF5Ggfr5LU"
+              buy-button-id="buy_btn_1R075TLp1OI919OFTDDc18rF"
               publishable-key="pk_test_51QyQjuLp1OI919OFeP9pJMcTpfn74c5uRYBnl2kG0PJsOeXipSRf2RCBPM142YaubzSoi9TDZG0mYFfvwTEVXhWU00D5pFd1TC"
             ></stripe-buy-button>
           </div>
