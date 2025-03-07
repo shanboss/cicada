@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import CheckBox from "./CheckBox";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 export default function RegisterForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -56,26 +58,24 @@ export default function RegisterForm() {
         setLoading(false);
         return;
       }
-
-      // Send welcome email
-      const emailResponse = await fetch("/api/sendEmail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, firstName }),
-      });
-
-      if (emailResponse.ok) {
-        setMessage("Successfully registered! 🎉 Check your email.");
-      } else {
-        const errorData = await emailResponse.json();
-        console.error("Email Error:", errorData.error);
-        setMessage("Registered, but failed to send email.");
-      }
     } catch (err) {
       console.error("Unexpected Error:", err);
       setMessage("An unexpected error occurred. Please try again.");
     }
 
+    // ✅ Send Welcome Email
+    await fetch("/api/sendEmail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, firstName }),
+    });
+    // Success message
+    setMessage("Success! Redirecting to home...");
+
+    // Wait 3 seconds, then navigate to home
+    setTimeout(() => {
+      router.push("/");
+    }, 3000);
     setLoading(false);
   };
 
@@ -155,7 +155,6 @@ export default function RegisterForm() {
               </div>
             </div>
           </div>
-
           {/* Checkbox */}
           <CheckBox
             label="Sign up for our mailing list"
@@ -164,7 +163,6 @@ export default function RegisterForm() {
             onChange={handleChange}
             name="subscribed"
           />
-
           {/* Submit Button */}
           <div>
             <button

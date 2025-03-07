@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import AddEvent from "@/components/AddEvent";
+import EditEvent from "@/components/EditEvent";
 import { supabase } from "../../../lib/supabaseClient";
-import { TrashIcon } from "@heroicons/react/24/solid";
+import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 
 export default function AdminDashboard() {
   const [events, setEvents] = useState([]); // State to store events
   const [loading, setLoading] = useState(true); // State for loading status
   const [isAdmin, setIsAdmin] = useState(false); // State to check admin status
+  const [editingEvent, setEditingEvent] = useState(null);
   const [email, setEmail] = useState(""); // State for email input
   const [password, setPassword] = useState(""); // State for password input
   const [error, setError] = useState(""); // State for error message
@@ -82,7 +84,13 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen flex-col mt-12 items-center px-6 py-12 bg-neutral-900 text-neutral-300">
       <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-
+      {editingEvent && (
+        <EditEvent
+          event={editingEvent}
+          onEventUpdated={fetchEvents}
+          onClose={() => setEditingEvent(null)}
+        />
+      )}
       {!isAdmin ? (
         <form
           onSubmit={handleLogin}
@@ -144,7 +152,7 @@ export default function AdminDashboard() {
           {/* Add Event Button & Modal */}
           <div className="mt-6">
             <AddEvent onEventAdded={fetchEvents} />
-          </div> 
+          </div>
 
           {/* Events List */}
           <div className="mt-8 w-full max-w-2xl">
@@ -172,16 +180,28 @@ export default function AdminDashboard() {
                       <p className="text-sm text-neutral-500 mt-1">
                         📅 {new Date(event.date).toLocaleDateString()}
                       </p>
+                      <p className="text-neutral-400">
+                        {event.time.slice(0, 5)}
+                      </p>{" "}
                     </div>
-
-                    {/* Delete Button */}
-                    <button
-                      onClick={() => handleDelete(event.id)}
-                      className="ml-4 p-2 bg-red-600 rounded-full hover:bg-red-500 transition"
-                      title="Delete Event"
-                    >
-                      <TrashIcon className="h-5 w-5 text-white" />
-                    </button>
+                    <div className="flex flex-row">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => setEditingEvent(event)}
+                        className="ml-4 p-2 bg-blue-600 rounded-full hover:bg-blue-500 transition"
+                        title="Edit Event"
+                      >
+                        <PencilSquareIcon className="h-5 w-5 text-white" />
+                      </button>
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDelete(event.id)}
+                        className="ml-4 p-2 bg-red-600 rounded-full hover:bg-red-500 transition"
+                        title="Delete Event"
+                      >
+                        <TrashIcon className="h-5 w-5 text-white" />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>

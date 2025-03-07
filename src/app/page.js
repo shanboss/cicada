@@ -9,13 +9,13 @@ import Footer from "@/components/Footer";
 import WaveAnimation from "@/components/WaveAnimation";
 
 export default function Home() {
+  const imagesArray = ["/gallery/img2.HEIC", "/gallery/img1.jpg"];
+
   return (
     <div className="bg-black text-white">
       <Hero />
-      <WaveAnimation />
       <About />
       <Events />
-      <Gallery />
       <Membership />
     </div>
   );

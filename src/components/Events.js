@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import Checkout from "./Checkout";
 
 // const events = [
 //   { date: "Feb 10", title: "Underground DJ Night", location: "Club 303" },
@@ -42,10 +43,23 @@ const Events = () => {
               <h3 className="text-xl font-semibold">{event.event_title}</h3>
               <p className="text-gray-400">{event.location}</p>
               <p className="text-gray-400">{event.desc}</p>
+              <p className="text-neutral-400">
+                {new Date(`1970-01-01T${event.time}`).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </p>{" "}
             </div>
             <span className="text-gray-300 bg-gray-800 px-4 py-2 rounded-full">
               {event.date}
             </span>
+            <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+
+            <stripe-buy-button
+              buy-button-id="buy_btn_1QzZbCLp1OI919OF5Ggfr5LU"
+              publishable-key="pk_test_51QyQjuLp1OI919OFeP9pJMcTpfn74c5uRYBnl2kG0PJsOeXipSRf2RCBPM142YaubzSoi9TDZG0mYFfvwTEVXhWU00D5pFd1TC"
+            ></stripe-buy-button>
           </div>
         ))}
       </div>

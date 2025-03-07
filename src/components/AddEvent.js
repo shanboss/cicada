@@ -9,6 +9,7 @@ export default function AddEvent({ onEventAdded }) {
     desc: "",
     date: "",
     location: "",
+    time: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -29,9 +30,9 @@ export default function AddEvent({ onEventAdded }) {
     setLoading(true);
     setMessage("");
 
-    const { event_title, desc, date, location } = formData;
+    const { event_title, desc, date, location, time } = formData;
 
-    if (!event_title || !desc || !date || !location) {
+    if (!event_title || !desc || !date || !location || !time) {
       setMessage("❌ All fields are required!");
       setLoading(false);
       return;
@@ -40,13 +41,19 @@ export default function AddEvent({ onEventAdded }) {
     try {
       const { error } = await supabase
         .from("events")
-        .insert([{ event_title, desc, date, location }]); // Updated column names
+        .insert([{ event_title, desc, date, time, location }]);
 
       if (error) {
         setMessage(`❌ Error: ${error.message}`);
       } else {
         setMessage("✅ Event added successfully!");
-        setFormData({ event_title: "", desc: "", date: "", location: "" }); // Reset form
+        setFormData({
+          event_title: "",
+          desc: "",
+          date: "",
+          location: "",
+          time: "",
+        }); // Reset form
         setTimeout(() => {
           setMessage("");
           setIsOpen(false); // Close modal after success
@@ -134,6 +141,20 @@ export default function AddEvent({ onEventAdded }) {
                   onChange={handleChange}
                   required
                   className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 placeholder-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+              {/* Time */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-300">
+                  Time
+                </label>
+                <input
+                  name="time"
+                  type="time"
+                  value={formData.time}
+                  onChange={handleChange}
+                  required
+                  className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
