@@ -9,13 +9,33 @@ import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 export default function AdminDashboard() {
   const [events, setEvents] = useState([]); // State to store events
   const [loading, setLoading] = useState(true); // State for loading status
-  const [isAdmin, setIsAdmin] = useState(false); // State to check admin status
   const [editingEvent, setEditingEvent] = useState(null);
   const [email, setEmail] = useState(""); // State for email input
   const [password, setPassword] = useState(""); // State for password input
   const [error, setError] = useState(""); // State for error message
+  const [user, setUser] = useState(null); // State to store user info
 
-  // Fetch events from Supabase
+  // ✅ Listen to auth state changes
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    getUser();
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription?.subscription.unsubscribe();
+  }, []);
+
+  // ✅ Fetch events from Supabase
   const fetchEvents = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -31,39 +51,11 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  // Handle Login
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError(""); // Clear any existing error messages
+  useEffect(() => {
+    if (user) fetchEvents(); // ✅ Fetch events only if the user is logged in
+  }, [user]);
 
-    // Check if password is correct (hardcoded to 123456 for testing)
-    if (password !== "123456") {
-      setError("Invalid password");
-      return;
-    }
-
-    // Fetch the role from the 'subscribers' table using email
-    const { data: userData, error: userError } = await supabase
-      .from("subscribers")
-      .select("role")
-      .eq("email", email)
-      .single();
-
-    if (userError || !userData) {
-      setError("Invalid email or user not found");
-      return;
-    }
-
-    // Check if the role is admin
-    if (userData.role === "admin") {
-      setIsAdmin(true);
-      fetchEvents(); // Fetch events if the user is an admin
-    } else {
-      setError("You do not have admin privileges");
-    }
-  };
-
-  // Handle event deletion
+  // ✅ Handle event deletion
   const handleDelete = async (eventId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this event?"
@@ -81,9 +73,31 @@ export default function AdminDashboard() {
     }
   };
 
+  // ✅ Handle login
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+    }
+  };
+
+  // ✅ Handle logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
   return (
     <div className="flex min-h-screen flex-col mt-12 items-center px-6 py-12 bg-neutral-900 text-neutral-300">
       <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+
       {editingEvent && (
         <EditEvent
           event={editingEvent}
@@ -91,7 +105,9 @@ export default function AdminDashboard() {
           onClose={() => setEditingEvent(null)}
         />
       )}
-      {!isAdmin ? (
+
+      {/* ✅ Show login form if not logged in */}
+      {!user ? (
         <form
           onSubmit={handleLogin}
           className="mt-6 w-full max-w-md bg-neutral-800 p-6 rounded-lg shadow-md"
@@ -149,12 +165,12 @@ export default function AdminDashboard() {
         </form>
       ) : (
         <>
-          {/* Add Event Button & Modal */}
+          {/* ✅ Add Event Button & Modal */}
           <div className="mt-6">
             <AddEvent onEventAdded={fetchEvents} />
           </div>
 
-          {/* Events List */}
+          {/* ✅ Events List */}
           <div className="mt-8 w-full max-w-2xl">
             <h2 className="text-2xl font-semibold mb-4">Current Events</h2>
 
@@ -173,31 +189,21 @@ export default function AdminDashboard() {
                       <h3 className="text-lg font-bold text-white">
                         {event.event_title}
                       </h3>
-                      <h3 className="text-lg font-regular text-white">
-                        {event.location}
-                      </h3>
                       <p className="text-neutral-400">{event.desc}</p>
                       <p className="text-sm text-neutral-500 mt-1">
                         📅 {new Date(event.date).toLocaleDateString()}
                       </p>
-                      <p className="text-neutral-400">
-                        {event.time.slice(0, 5)}
-                      </p>{" "}
                     </div>
                     <div className="flex flex-row">
-                      {/* Edit Button */}
                       <button
                         onClick={() => setEditingEvent(event)}
                         className="ml-4 p-2 bg-blue-600 rounded-full hover:bg-blue-500 transition"
-                        title="Edit Event"
                       >
                         <PencilSquareIcon className="h-5 w-5 text-white" />
                       </button>
-                      {/* Delete Button */}
                       <button
                         onClick={() => handleDelete(event.id)}
                         className="ml-4 p-2 bg-red-600 rounded-full hover:bg-red-500 transition"
-                        title="Delete Event"
                       >
                         <TrashIcon className="h-5 w-5 text-white" />
                       </button>

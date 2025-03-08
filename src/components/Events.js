@@ -37,9 +37,9 @@ const Events = () => {
         {events.map((event, index) => (
           <div
             key={index}
-            className="p-4 border border-gray-700 rounded-lg flex justify-between items-center"
+            className="p-4 border border-gray-700 rounded-lg flex flex-col md:flex-row md:justify-between items-start gap-4"
           >
-            <div className="flex flex-col gap-y-2">
+            <div className="flex flex-col gap-y-2 w-full">
               <h3 className="text-xl font-semibold">{event.event_title}</h3>
               <p className="text-gray-400">{event.location}</p>
               <p className="text-gray-400">{event.desc}</p>
@@ -54,13 +54,18 @@ const Events = () => {
                 </span>
               </p>
             </div>
-
-            <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-
-            <stripe-buy-button
-              buy-button-id="buy_btn_1R075TLp1OI919OFTDDc18rF"
-              publishable-key="pk_test_51QyQjuLp1OI919OFeP9pJMcTpfn74c5uRYBnl2kG0PJsOeXipSRf2RCBPM142YaubzSoi9TDZG0mYFfvwTEVXhWU00D5pFd1TC"
-            ></stripe-buy-button>
+            <div className="w-full md:w-auto">
+              {" "}
+              {/* Makes sure the button doesn't cause empty space */}
+              <script
+                async
+                src="https://js.stripe.com/v3/buy-button.js"
+              ></script>
+              <stripe-buy-button
+                buy-button-id="buy_btn_1R075TLp1OI919OFTDDc18rF"
+                publishable-key="pk_test_51QyQjuLp1OI919OFeP9pJMcTpfn74c5uRYBnl2kG0PJsOeXipSRf2RCBPM142YaubzSoi9TDZG0mYFfvwTEVXhWU00D5pFd1TC"
+              ></stripe-buy-button>
+            </div>
           </div>
         ))}
       </div>
