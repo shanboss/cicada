@@ -19,7 +19,7 @@ export default function AddEvent({ onEventAdded }) {
   // Handle input changes
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "image" && files.length) {
+    if (name === "image" && files && files.length) {
       setFile(files[0]);
     } else {
       setFormData((prev) => ({
@@ -48,11 +48,12 @@ export default function AddEvent({ onEventAdded }) {
       // Generate a unique filename
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-      const filePath = fileName; // You can add subfolders if needed
+      // Include the "private" folder in the file path
+      const filePath = `private/${fileName}`;
 
-      // Upload file to a Supabase Storage bucket (make sure to create this bucket in your Supabase dashboard)
+      // Upload file to the "images" bucket
       const { error: uploadError } = await supabase.storage
-        .from("images") // replace with your bucket name
+        .from("images")
         .upload(filePath, file);
 
       if (uploadError) {
@@ -61,12 +62,12 @@ export default function AddEvent({ onEventAdded }) {
         return;
       }
 
-      // Retrieve the public URL for the uploaded file
-      const { publicURL, error: urlError } = supabase.storage
+      // Generate a signed URL for the uploaded file valid for 60 seconds
+      const { data, error: urlError } = await supabase.storage
         .from("images")
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 60);
 
-      if (urlError || !publicURL) {
+      if (urlError || !data.signedUrl) {
         setMessage(
           `❌ Error getting image URL: ${
             urlError?.message || "No URL returned"
@@ -76,11 +77,11 @@ export default function AddEvent({ onEventAdded }) {
         return;
       }
 
-      image = publicURL;
+      image = data.signedUrl;
     }
 
     try {
-      // Insert the event record with the image
+      // Insert the event record with the image URL
       const { error } = await supabase
         .from("events")
         .insert([{ event_title, desc, date, time, location, image }]);
