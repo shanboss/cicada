@@ -62,12 +62,12 @@ export default function AddEvent({ onEventAdded }) {
         return;
       }
 
-      // Generate a signed URL for the uploaded file valid for 60 seconds
-      const { data, error: urlError } = await supabase.storage
+      // Retrieve the public URL for the uploaded file
+      const { publicURL, error: urlError } = supabase.storage
         .from("images")
-        .createSignedUrl(filePath, 60);
+        .getPublicUrl(filePath);
 
-      if (urlError || !data.signedUrl) {
+      if (urlError || !publicURL) {
         setMessage(
           `❌ Error getting image URL: ${
             urlError?.message || "No URL returned"
@@ -77,7 +77,7 @@ export default function AddEvent({ onEventAdded }) {
         return;
       }
 
-      image = data.signedUrl;
+      image = publicURL;
     }
 
     try {

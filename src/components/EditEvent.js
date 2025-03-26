@@ -48,7 +48,6 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
     setMessage("");
 
     const { event_title, desc, date, location, time } = formData;
-
     if (!event_title || !desc || !date || !location || !time) {
       setMessage("❌ All fields are required!");
       setLoading(false);
@@ -62,7 +61,7 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
     if (file) {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-      // Set filePath to include the "private" folder
+      // Include the "private" folder in the file path
       const filePath = `private/${fileName}`;
 
       // Upload file to Supabase Storage bucket "images"
@@ -76,22 +75,17 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
         return;
       }
 
-      // Generate a signed URL valid for 60 seconds so the image can be accessed by authenticated users
-      const { data, error: urlError } = await supabase.storage
+      // Retrieve the public URL for the uploaded file
+      const { publicURL, error: urlError } = supabase.storage
         .from("images")
-        .createSignedUrl(filePath, 60);
+        .getPublicUrl(filePath);
 
-      if (urlError || !data.signedUrl) {
-        setMessage(
-          `❌ Error getting image URL: ${
-            urlError?.message || "No URL returned"
-          }`
-        );
-        setLoading(false);
-        return;
+      if (urlError || !publicURL) {
+        // Fallback: Manually construct the URL if getPublicUrl returns empty
+        image = `https://towexkhijugmytktakxd.supabase.co/storage/v1/object/public/images/${filePath}`;
+      } else {
+        image = publicURL;
       }
-
-      image = data.signedUrl;
     }
 
     try {
@@ -115,7 +109,6 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
       setMessage("❌ An unexpected error occurred.");
       console.error(err);
     }
-
     setLoading(false);
   };
 
