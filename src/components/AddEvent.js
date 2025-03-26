@@ -14,14 +14,19 @@ export default function AddEvent({ onEventAdded }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isOpen, setIsOpen] = useState(false); // Modal state
+  const [file, setFile] = useState(null); // Image File State
 
   // Handle input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const { name, value, files } = e.target;
+    if (name === "image" && files.length) {
+      setFile(files[0]);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // Submit event to Supabase
@@ -38,10 +43,47 @@ export default function AddEvent({ onEventAdded }) {
       return;
     }
 
+    let image = "";
+    if (file) {
+      // Generate a unique filename
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const filePath = fileName; // You can add subfolders if needed
+
+      // Upload file to a Supabase Storage bucket (make sure to create this bucket in your Supabase dashboard)
+      const { error: uploadError } = await supabase.storage
+        .from("images") // replace with your bucket name
+        .upload(filePath, file);
+
+      if (uploadError) {
+        setMessage(`❌ Error uploading image: ${uploadError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      // Retrieve the public URL for the uploaded file
+      const { publicURL, error: urlError } = supabase.storage
+        .from("images")
+        .getPublicUrl(filePath);
+
+      if (urlError || !publicURL) {
+        setMessage(
+          `❌ Error getting image URL: ${
+            urlError?.message || "No URL returned"
+          }`
+        );
+        setLoading(false);
+        return;
+      }
+
+      image = publicURL;
+    }
+
     try {
+      // Insert the event record with the image
       const { error } = await supabase
         .from("events")
-        .insert([{ event_title, desc, date, time, location }]);
+        .insert([{ event_title, desc, date, time, location, image }]);
 
       if (error) {
         setMessage(`❌ Error: ${error.message}`);
@@ -53,10 +95,11 @@ export default function AddEvent({ onEventAdded }) {
           date: "",
           location: "",
           time: "",
-        }); // Reset form
+        });
+        setFile(null); // Reset file input
         setTimeout(() => {
           setMessage("");
-          setIsOpen(false); // Close modal after success
+          setIsOpen(false);
           onEventAdded(); // Refresh event list if needed
         }, 1500);
       }
@@ -64,7 +107,6 @@ export default function AddEvent({ onEventAdded }) {
       setMessage("❌ An unexpected error occurred.");
       console.error(err);
     }
-
     setLoading(false);
   };
 
@@ -155,6 +197,20 @@ export default function AddEvent({ onEventAdded }) {
                   onChange={handleChange}
                   required
                   className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Upload Image */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-300">
+                  Upload Image
+                </label>
+                <input
+                  name="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 placeholder-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 

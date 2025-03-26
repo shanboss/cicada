@@ -11,6 +11,7 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
     time: "",
     location: "",
   });
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -21,7 +22,7 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
         event_title: event.event_title || "",
         desc: event.desc || "",
         date: event.date || "",
-        time: event.time || "", // Ensure time is never undefined
+        time: event.time || "",
         location: event.location || "",
       });
     }
@@ -29,11 +30,15 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
 
   // Handle input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const { name, value, files } = e.target;
+    if (name === "image" && files && files.length > 0) {
+      setFile(files[0]);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // Handle form submission for updating event
@@ -44,16 +49,56 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
 
     const { event_title, desc, date, location, time } = formData;
 
-    if (!event_title || !desc || !date || !location) {
+    if (!event_title || !desc || !date || !location || !time) {
       setMessage("❌ All fields are required!");
       setLoading(false);
       return;
     }
 
+    // Default to existing image URL if no new file is selected
+    let image = event.image || "";
+
+    // If a new image file is provided, upload it to the "private" folder in your Supabase Storage bucket
+    if (file) {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      // Set filePath to include the "private" folder
+      const filePath = `private/${fileName}`;
+
+      // Upload file to Supabase Storage bucket "images"
+      const { error: uploadError } = await supabase.storage
+        .from("images")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        setMessage(`❌ Error uploading image: ${uploadError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      // Generate a signed URL valid for 60 seconds so the image can be accessed by authenticated users
+      const { data, error: urlError } = await supabase.storage
+        .from("images")
+        .createSignedUrl(filePath, 60);
+
+      if (urlError || !data.signedUrl) {
+        setMessage(
+          `❌ Error getting image URL: ${
+            urlError?.message || "No URL returned"
+          }`
+        );
+        setLoading(false);
+        return;
+      }
+
+      image = data.signedUrl;
+    }
+
     try {
+      // Update the event record with the new data and image URL
       const { error } = await supabase
         .from("events")
-        .update({ event_title, desc, date, location, time })
+        .update({ event_title, desc, date, location, time, image })
         .eq("id", event.id);
 
       if (error) {
@@ -79,7 +124,7 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
       <div className="bg-neutral-800 p-6 rounded-lg shadow-lg max-w-md w-full">
         <h2 className="text-xl font-bold mb-4 text-white">Edit Event</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
+          {/* Event Title */}
           <div>
             <label className="block text-sm font-medium text-neutral-300">
               Event Title
@@ -138,6 +183,7 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
               className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
+
           {/* Time */}
           <div>
             <label className="block text-sm font-medium text-neutral-300">
@@ -152,6 +198,32 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
               className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
+
+          {/* File Input for New Image */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-300">
+              Upload New Image
+            </label>
+            <input
+              name="image"
+              type="file"
+              accept="image/*"
+              onChange={handleChange}
+              className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          {/* Optionally display current image preview */}
+          {event.image && (
+            <div className="flex flex-col items-center">
+              <p className="text-sm text-neutral-300">Current Image:</p>
+              <img
+                src={event.image}
+                alt={event.event_title}
+                className="w-[5rem] mt-2 rounded"
+              />
+            </div>
+          )}
 
           {/* Submit Button */}
           <div className="flex justify-between">

@@ -58,26 +58,37 @@ const EventCarousel = () => {
           {events.map((event) => (
             <div
               key={event.id}
-              className="min-w-full flex flex-col justify-start items-start p-8 h-full"
+              className="flex flex-row justify-between items-center p-8"
             >
-              <h3 className="text-3xl sm:text-5xl font-bold text-white">
-                {event.event_title}
-              </h3>
-              <p className="text-white mt-2 text-2xl">{event.desc}</p>
-              <p className="text-neutral-300 mt-2 text-xl">
-                {new Date(event.date).toLocaleDateString()} |{" "}
-                {new Date(`1970-01-01T${event.time}`).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                })}
-              </p>
-              <Link
-                href={"/events"}
-                className="bg-indigo-700 px-4 py-2 rounded-lg m-2 hover:bg-indigo-600 duration-100"
-              >
-                Get Tickets Now!
-              </Link>
+              {/* Text container takes available space */}
+              <div className="flex-1 flex flex-col justify-start items-start">
+                <h3 className="text-3xl sm:text-5xl font-bold text-white">
+                  {event.event_title}
+                </h3>
+                <p className="text-white mt-2 text-2xl">{event.desc}</p>
+                <p className="text-neutral-300 mt-2 text-xl">
+                  {new Date(event.date).toLocaleDateString()} |{" "}
+                  {new Date(`1970-01-01T${event.time}`).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </p>
+                <Link
+                  href={"/events"}
+                  className="bg-indigo-700 px-4 py-2 rounded-lg m-2 hover:bg-indigo-600 duration-100"
+                >
+                  Get Tickets Now!
+                </Link>
+              </div>
+              {/* Image container: set width as needed */}
+              <div className="flex-shrink-0 ml-4">
+                <img
+                  src={event.image}
+                  alt={event.event_title}
+                  className="w-48 h-auto rounded"
+                />
+              </div>
             </div>
           ))}
         </div>
