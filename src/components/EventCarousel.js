@@ -62,7 +62,7 @@ const EventCarousel = () => {
             >
               {/* Text container takes available space */}
               <div className="flex-1 flex flex-col justify-start items-start">
-                <h3 className="text-3xl sm:text-5xl font-bold text-white">
+                <h3 className="text-3xl sm:text-5xl font-semibold text-white">
                   {event.event_title}
                 </h3>
                 <p className="text-white mt-2 text-2xl">{event.desc}</p>
