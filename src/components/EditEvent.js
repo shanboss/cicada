@@ -10,6 +10,8 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
     date: "",
     time: "",
     location: "",
+    payment_link: "",
+    image: "",
   });
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -24,6 +26,8 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
         date: event.date || "",
         time: event.time || "",
         location: event.location || "",
+        payment_link: event.payment_link || "",
+        image: event.image || "",
       });
     }
   }, [event]);
@@ -47,7 +51,7 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
     setLoading(true);
     setMessage("");
 
-    const { event_title, desc, date, location, time } = formData;
+    const { event_title, desc, date, location, time, payment_link } = formData;
     if (!event_title || !desc || !date || !location || !time) {
       setMessage("❌ All fields are required!");
       setLoading(false);
@@ -92,7 +96,15 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
       // Update the event record with the new data and image URL
       const { error } = await supabase
         .from("events")
-        .update({ event_title, desc, date, location, time, image })
+        .update({
+          event_title,
+          desc,
+          date,
+          location,
+          time,
+          image,
+          payment_link,
+        })
         .eq("id", event.id);
 
       if (error) {
@@ -188,6 +200,20 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
                 name="time"
                 type="time"
                 value={formData.time}
+                onChange={handleChange}
+                required
+                className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+            {/* Payment Link */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-300">
+                Payment Link
+              </label>
+              <input
+                name="payment_link"
+                type="payment_link"
+                value={formData.payment_link}
                 onChange={handleChange}
                 required
                 className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"

@@ -1,5 +1,4 @@
-"use client"; // Ensure it's a client component
-
+"use client";
 import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -35,9 +34,8 @@ export default function AddEvent({ onEventAdded }) {
     setLoading(true);
     setMessage("");
 
-    const { event_title, desc, date, location, time } = formData;
-
-    if (!event_title || !desc || !date || !location || !time) {
+    const { event_title, desc, date, location, time, payment_link } = formData;
+    if (!event_title || !desc || !date || !location || !time || !payment_link) {
       setMessage("❌ All fields are required!");
       setLoading(false);
       return;
@@ -51,7 +49,7 @@ export default function AddEvent({ onEventAdded }) {
       // Include the "private" folder in the file path
       const filePath = `private/${fileName}`;
 
-      // Upload file to the "images" bucket
+      // Upload file to Supabase Storage bucket "images"
       const { error: uploadError } = await supabase.storage
         .from("images")
         .upload(filePath, file);
@@ -68,23 +66,20 @@ export default function AddEvent({ onEventAdded }) {
         .getPublicUrl(filePath);
 
       if (urlError || !publicURL) {
-        setMessage(
-          `❌ Error getting image URL: ${
-            urlError?.message || "No URL returned"
-          }`
-        );
-        setLoading(false);
-        return;
+        // Fallback: manually construct the URL if getPublicUrl returns empty
+        image = `https://towexkhijugmytktakxd.supabase.co/storage/v1/object/public/images/${filePath}`;
+      } else {
+        image = publicURL;
       }
-
-      image = publicURL;
     }
 
     try {
       // Insert the event record with the image URL
       const { error } = await supabase
         .from("events")
-        .insert([{ event_title, desc, date, time, location, image }]);
+        .insert([
+          { event_title, desc, date, time, location, image, payment_link },
+        ]);
 
       if (error) {
         setMessage(`❌ Error: ${error.message}`);
@@ -96,6 +91,7 @@ export default function AddEvent({ onEventAdded }) {
           date: "",
           location: "",
           time: "",
+          payment_link: "",
         });
         setFile(null); // Reset file input
         setTimeout(() => {
@@ -195,6 +191,21 @@ export default function AddEvent({ onEventAdded }) {
                   name="time"
                   type="time"
                   value={formData.time}
+                  onChange={handleChange}
+                  required
+                  className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Payment Link */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-300">
+                  Payment Link
+                </label>
+                <input
+                  name="payment_link"
+                  type="payment_link"
+                  value={formData.payment_link}
                   onChange={handleChange}
                   required
                   className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"

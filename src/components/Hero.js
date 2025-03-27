@@ -12,8 +12,6 @@ const Hero = () => {
       <WaveAnimation duration={10} />
 
       {/* Hero Content (Above Background) */}
-
-      <EventCarousel />
     </section>
   );
 };

@@ -1,149 +1,4 @@
 @font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Conthrax";
-  src: url("/fonts/Conthrax-SemiBold.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-}
-
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-BoldItalic.woff2")
-    format("woff2");
-  font-weight: 700;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-Italic.woff2") format("woff2");
-  font-weight: 400;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-Light.woff2") format("woff2");
-  font-weight: 300;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-LightItalic.woff2")
-    format("woff2");
-  font-weight: 300;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-Medium.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-MediumItalic.woff2")
-    format("woff2");
-  font-weight: 500;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-DemiBold.woff2")
-    format("woff2");
-  font-weight: 600;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-DemiBoldItalic.woff2")
-    format("woff2");
-  font-weight: 600;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-ExtraBold.woff2")
-    format("woff2");
-  font-weight: 800;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-ExtraBoldItalic.woff2")
-    format("woff2");
-  font-weight: 800;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-ExtraLight.woff2")
-    format("woff2");
-  font-weight: 200;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-ExtraLightItalic.woff2")
-    format("woff2");
-  font-weight: 200;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-Thin.woff2") format("woff2");
-  font-weight: 100;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-ThinItalic.woff2")
-    format("woff2");
-  font-weight: 100;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT Firs Neue/woff2/TTFirsNeue-Black.woff2") format("woff2");
-  font-weight: 900;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "TT Firs Neue";
-  src: url("/fonts/TT_Firs_Neue/woff2/TTFirsNeue-BlackItalic.woff2")
-    format("woff2");
-  font-weight: 900;
-  font-style: italic;
-}
-
-@font-face {
   font-family: "Poppins";
   src: url("/fonts/Poppins/Poppins-Black.ttf") format("truetype");
   font-weight: 900;
@@ -267,4 +122,11 @@
   src: url("/fonts/Poppins/Poppins-ThinItalic.ttf") format("truetype");
   font-weight: 100;
   font-style: italic;
+}
+
+@font-face {
+  font-family: "monument";
+  src: url("/fonts/Monument/MonumentExtended-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
 }

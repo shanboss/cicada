@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
   }, []);
   return (
     <html lang="en">
-      <body className={"font-poppins pt-20"}>
+      <body className={"font-monument antialiased pt-20"}>
         <Navbar />
         {children}
         <Footer />
