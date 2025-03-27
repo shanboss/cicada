@@ -100,7 +100,7 @@ const Navbar = () => {
           </button>
         </div>
         <ul className="flex flex-col space-y-4 mt-6 px-6">
-          <li>
+          {/* <li>
             <Link
               href="/about"
               className="hover:text-gray-400"
@@ -108,7 +108,7 @@ const Navbar = () => {
             >
               About
             </Link>
-          </li>
+          </li> */}
           <li>
             <Link
               href="/events"
@@ -118,7 +118,7 @@ const Navbar = () => {
               Events
             </Link>
           </li>
-          <li>
+          {/* <li>
             <Link
               href="/gallery"
               className="hover:text-gray-400"
@@ -126,7 +126,7 @@ const Navbar = () => {
             >
               Gallery
             </Link>
-          </li>
+          </li> */}
           <li onClick={() => setIsOpen(false)}>
             <PrimaryButton label={"Join Now"} link={"/signup"} />
           </li>
