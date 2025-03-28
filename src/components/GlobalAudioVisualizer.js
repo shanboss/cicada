@@ -231,9 +231,9 @@ const GlobalAudioVisualizer = ({ src, title }) => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative max-w-full">
       {/* Player controls */}
-      <div className="fixed left-2 top-[9rem] ml-2 lg:absolute lg:top-[3rem] lg:left-[2rem] z-40 text-white p-4 border border-white rounded-3xl shadow-lg flex flex-row items-center">
+      <div className="w-full top-[2rem] max-w-[22rem] sm:ml-0 ml-2 absolute lg:top-[3rem] lg:left-[2rem] z-40 text-white p-4 border border-white rounded-3xl shadow-lg flex flex-row items-center">
         <div className="flex flex-row items-center justify-center gap-x-2">
           <button onClick={togglePlay} className="focus:outline-none">
             {isPlaying ? (
