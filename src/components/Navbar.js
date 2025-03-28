@@ -41,7 +41,7 @@ const Navbar = () => {
             alt="Cicada Logo"
             width={100}
             height={100}
-            className="hidden md:block"
+            className="block"
           />
           <Link href={"/"}>
             <h1 className="text-2xl font-bold tracking-wide hover:cursor-pointer">

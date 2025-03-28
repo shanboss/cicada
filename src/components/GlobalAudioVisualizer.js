@@ -1,16 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PlayIcon, PauseIcon } from "@heroicons/react/24/solid";
-
+/** Returns a different number of bars based on window width. */
+function getResponsiveBarCount(width) {
+  if (width >= 1024) return 70; // large screens (lg)
+  if (width >= 768) return 50; // medium screens (md)
+  if (width >= 640) return 30; // small screens (sm)
+  return 15; // extra small
+}
 const GlobalAudioVisualizer = ({ src, title }) => {
   // State for play/pause, progress, and drag seeking
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [barCount, setBarCount] = useState(70);
 
   // Visualizer constants
   const baseline = 2; // minimum “base” height (in pixels) always visible
-  const barCount = 70; // number of bars (frequency groups)
+
   const sensitivityFactor = 1; // amplifies the frequency data reaction
   const maxHeight = 400; // maximum height (in pixels) for each bar
 
@@ -33,7 +40,32 @@ const GlobalAudioVisualizer = ({ src, title }) => {
   const analyzerRef = useRef(null);
   const dataArrayRef = useRef(null);
   const sourceRef = useRef(null);
+  function getBreakpoint(width) {
+    if (width >= 1024) return "lg";
+    if (width >= 768) return "md";
+    if (width >= 640) return "sm";
+    return "xs";
+  }
+  useEffect(() => {
+    let currentBreakpoint = getBreakpoint(window.innerWidth);
+    function updateBarCount() {
+      const newCount = getResponsiveBarCount(window.innerWidth);
+      setBarCount(newCount);
+    }
+    updateBarCount(); // Run once on mount.
+    function handleResize() {
+      const newBreakpoint = getBreakpoint(window.innerWidth);
+      if (newBreakpoint !== currentBreakpoint) {
+        // The user has crossed a breakpoint boundary
+        window.location.reload();
+      }
+    }
 
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
   // Setup Web Audio API on mount
   useEffect(() => {
     const audio = audioRef.current;
@@ -199,9 +231,9 @@ const GlobalAudioVisualizer = ({ src, title }) => {
   };
 
   return (
-    <>
+    <div className="relative">
       {/* Player controls */}
-      <div className="fixed top-[7rem] left-[10rem] z-50 text-white p-4 border border-white rounded-3xl shadow-lg flex flex-row items-center">
+      <div className="fixed left-2 top-[9rem] ml-2 lg:absolute lg:top-[3rem] lg:left-[2rem] z-40 text-white p-4 border border-white rounded-3xl shadow-lg flex flex-row items-center">
         <div className="flex flex-row items-center justify-center gap-x-2">
           <button onClick={togglePlay} className="focus:outline-none">
             {isPlaying ? (
@@ -251,14 +283,14 @@ const GlobalAudioVisualizer = ({ src, title }) => {
                   }}
                 />
                 {/* Peak indicator */}
-                <div
+                {/* <div
                   className="absolute left-0 right-0 h-[2px] bg-black"
                   style={{
                     // Position the peak indicator relative to the container.
                     // (peakHeights[index] / maxHeight)*100 gives a percentage value.
                     bottom: `${(peakHeights[index] / maxHeight) * 100}%`,
                   }}
-                />
+                /> */}
               </div>
             );
           })}
@@ -280,7 +312,7 @@ const GlobalAudioVisualizer = ({ src, title }) => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
