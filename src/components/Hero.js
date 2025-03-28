@@ -17,7 +17,7 @@ const Hero = () => {
       {/* Hero Content (Above Background) */}
       {/* Add your hero content here */}
       <GlobalAudioVisualizer
-        src={"/Summertime Blues.wav"}
+        src={"/Gimme That Bounce.mp3"}
         title={"Vibes curated by Redline"}
       />
     </section>
