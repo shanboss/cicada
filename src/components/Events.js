@@ -86,7 +86,9 @@ const Events = () => {
                         {event.date}
                       </span>
                     </p>
-                    <p className="text-gray-400 text-xs">{event.desc}</p>
+                    <p className="text-gray-400 text-xs whitespace-pre-wrap">
+                      {event.desc}
+                    </p>{" "}
                   </div>
                   <div className="mt-4 w-full">
                     <button

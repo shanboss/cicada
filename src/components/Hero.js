@@ -1,7 +1,11 @@
+"use client";
+// Hero.jsx
 import PrimaryButton from "./Button";
-import WaveAnimation from "./WaveAnimation"; // Import WaveAnimation component
-import Carousel from "./EventCarousel";
-import EventCarousel from "./EventCarousel";
+import DotMatrix from "./DotMatrix";
+import GlobalAudioVisualizer from "./GlobalAudioVisualizer";
+import MusicPlayer from "./MusicPlayer";
+
+import WaveAnimation from "./WaveAnimation";
 
 const Hero = () => {
   return (
@@ -12,6 +16,12 @@ const Hero = () => {
       <WaveAnimation duration={10} />
 
       {/* Hero Content (Above Background) */}
+      {/* Add your hero content here */}
+      {/* <GlobalAudioVisualizer />
+      <MusicPlayer
+        id="global-audio"
+        src="/Sessions at Josey's - Adi louis.mp3"
+      /> */}
     </section>
   );
 };

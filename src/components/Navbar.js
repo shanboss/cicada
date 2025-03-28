@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid";
 import PrimaryButton from "./Button";
+import Image from "next/image";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,12 +34,21 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 w-full bg-black bg-opacity-90 text-white shadow-md z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        {/* Logo */}
-        <Link href={"/"}>
-          <h1 className="text-2xl font-bold tracking-wide hover:cursor-pointer">
-            CICADA
-          </h1>
-        </Link>
+        <div className="flex flex-row items-center justify-center">
+          {/* Logo */}
+          <Image
+            src="/CicadaLogo.png"
+            alt="Cicada Logo"
+            width={100}
+            height={100}
+            className="hidden md:block"
+          />
+          <Link href={"/"}>
+            <h1 className="text-2xl font-bold tracking-wide hover:cursor-pointer">
+              CICADA
+            </h1>
+          </Link>
+        </div>
 
         {/* Desktop Menu */}
         <ul className="hidden md:flex space-x-6 items-center">

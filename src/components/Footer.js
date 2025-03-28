@@ -51,14 +51,11 @@ const Footer = () => {
         © 2025 Cicada Music Society | All Rights Reserved
       </p>
       <div className="mt-4 flex justify-center space-x-4">
-        <a href="#" className="hover:text-blue-500">
+        <a
+          href="https://www.instagram.com/utdcicada/"
+          className="hover:text-blue-500"
+        >
           Instagram
-        </a>
-        <a href="#" className="hover:text-blue-500">
-          Twitter
-        </a>
-        <a href="#" className="hover:text-blue-500">
-          Facebook
         </a>
         <Link href="/admin" className="hover:text-blue-500">
           Admin
