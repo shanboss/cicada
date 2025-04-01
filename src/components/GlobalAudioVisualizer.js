@@ -265,7 +265,7 @@ const GlobalAudioVisualizer = ({ src, title }) => {
         </div>
         {/* Separate text box (not inside the bordered player) */}
         <a
-          href="https://soundcloud.com"
+          href="https://on.soundcloud.com/rG68NtRTzKfzV1Y49"
           target="_blank"
           rel="noopener noreferrer"
           className="text-neutral-300 hover:text-white hover:underline p-4 flex flex-row flex-nowrap items-center justify-center max-w-full gap-x-3"
