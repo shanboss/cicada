@@ -2,6 +2,9 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faInstagram } from "@fortawesome/free-brands-svg-icons";
+
 const Footer = () => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
@@ -50,12 +53,12 @@ const Footer = () => {
       <p className="text-gray-400">
         © 2025 Cicada Music Society | All Rights Reserved
       </p>
-      <div className="mt-4 flex justify-center space-x-4">
+      <div className="mt-4 flex justify-center items-center space-x-4">
         <a
           href="https://www.instagram.com/utdcicada/"
           className="hover:text-blue-500"
         >
-          Instagram
+          <FontAwesomeIcon icon={faInstagram} className="w-8 h-auto" />
         </a>
         <Link href="/admin" className="hover:text-blue-500">
           Admin

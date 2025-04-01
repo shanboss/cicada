@@ -1,10 +1,13 @@
 "use client";
+import { Canvas } from "@react-three/fiber";
 // Hero.jsx
 import PrimaryButton from "./Button";
 import DotMatrix from "./DotMatrix";
 import GlobalAudioVisualizer from "./GlobalAudioVisualizer";
+import Object from "./Object";
 
 import WaveAnimation from "./WaveAnimation";
+import TwistCube from "./TwistCube";
 
 const Hero = () => {
   return (
@@ -13,13 +16,15 @@ const Hero = () => {
       {/* <WaveAnimation duration={1} />
       <WaveAnimation duration={3} />
       <WaveAnimation duration={10} /> */}
-
       {/* Hero Content (Above Background) */}
       {/* Add your hero content here */}
       <GlobalAudioVisualizer
-        src={"/Gimme That Bounce.mp3"}
+        src={"/MakeMeFeel.mp3"}
         title={"Vibes curated by Redline"}
       />
+
+      {/* <Object />
+      <TwistCube /> */}
     </section>
   );
 };

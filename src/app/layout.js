@@ -41,7 +41,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={"font-monument antialiased pt-20"}>
         <Navbar />
-        {children}
+        <div className="my-10">{children}</div>
         <Footer />
       </body>
     </html>

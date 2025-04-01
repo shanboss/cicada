@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PlayIcon, PauseIcon } from "@heroicons/react/24/solid";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSoundcloud } from "@fortawesome/free-brands-svg-icons";
+
 /** Returns a different number of bars based on window width. */
 function getResponsiveBarCount(width) {
   if (width >= 1024) return 70; // large screens (lg)
@@ -8,6 +11,7 @@ function getResponsiveBarCount(width) {
   if (width >= 640) return 30; // small screens (sm)
   return 15; // extra small
 }
+
 const GlobalAudioVisualizer = ({ src, title }) => {
   // State for play/pause, progress, and drag seeking
   const [isPlaying, setIsPlaying] = useState(false);
@@ -17,15 +21,14 @@ const GlobalAudioVisualizer = ({ src, title }) => {
 
   // Visualizer constants
   const baseline = 2; // minimum “base” height (in pixels) always visible
-
   const sensitivityFactor = 1; // amplifies the frequency data reaction
   const maxHeight = 400; // maximum height (in pixels) for each bar
 
-  // New parameters to control which part of the frequency spectrum to display:
-  // Process only the bins between startBinRatio and endBinRatio.
-  const startBinRatio = 0.5; // start at the beginning of the frequency data
-  const endBinRatio = 0.6; // process only the lower 30% of bins
-  const lowFrequencyBoost = 2;
+  // New parameters to control which part of the frequency spectrum to display.
+  // Here, we process bins from the very start (0) to 60% of the total bins.
+  const startBinRatio = 0.0;
+  const endBinRatio = 1;
+  const lowFrequencyBoost = 1.2;
 
   // Initial bar heights set to the baseline
   const [barHeights, setBarHeights] = useState(Array(barCount).fill(baseline));
@@ -40,12 +43,15 @@ const GlobalAudioVisualizer = ({ src, title }) => {
   const analyzerRef = useRef(null);
   const dataArrayRef = useRef(null);
   const sourceRef = useRef(null);
+
+  // Helper for responsive behavior.
   function getBreakpoint(width) {
     if (width >= 1024) return "lg";
     if (width >= 768) return "md";
     if (width >= 640) return "sm";
     return "xs";
   }
+
   useEffect(() => {
     let currentBreakpoint = getBreakpoint(window.innerWidth);
     function updateBarCount() {
@@ -56,17 +62,16 @@ const GlobalAudioVisualizer = ({ src, title }) => {
     function handleResize() {
       const newBreakpoint = getBreakpoint(window.innerWidth);
       if (newBreakpoint !== currentBreakpoint) {
-        // The user has crossed a breakpoint boundary
+        // The user has crossed a breakpoint boundary.
         window.location.reload();
       }
     }
 
     window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
-  // Setup Web Audio API on mount
+
+  // Setup Web Audio API on mount.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -74,12 +79,12 @@ const GlobalAudioVisualizer = ({ src, title }) => {
     audioContextRef.current = new (window.AudioContext ||
       window.webkitAudioContext)();
     analyzerRef.current = audioContextRef.current.createAnalyser();
-    // Using a larger fftSize for more frequency bins
+    // Using a larger fftSize for more frequency bins.
     analyzerRef.current.fftSize = 512;
     const bufferLength = analyzerRef.current.frequencyBinCount;
     dataArrayRef.current = new Uint8Array(bufferLength);
 
-    // Connect the audio element to the analyzer and then to the speakers
+    // Connect the audio element to the analyzer and then to the speakers.
     sourceRef.current = audioContextRef.current.createMediaElementSource(audio);
     sourceRef.current.connect(analyzerRef.current);
     analyzerRef.current.connect(audioContextRef.current.destination);
@@ -93,7 +98,7 @@ const GlobalAudioVisualizer = ({ src, title }) => {
   }, []);
 
   // Function to compute an interpolated color for a given bar index.
-  // The gradient stops are:purple, blue
+  // The gradient stops are: purple, blue.
   const getBarColor = (index) => {
     const gradientStops = [
       [128, 0, 128], // purple
@@ -121,21 +126,20 @@ const GlobalAudioVisualizer = ({ src, title }) => {
       startColor[2] + fraction * (endColor[2] - startColor[2])
     );
 
-    // Convert to hex color string.
     const toHex = (n) => n.toString(16).padStart(2, "0");
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   };
 
-  // Animation loop for updating frequency data
+  // Animation loop for updating frequency data.
   const animate = () => {
     if (analyzerRef.current) {
       analyzerRef.current.getByteFrequencyData(dataArrayRef.current);
       const totalBins = dataArrayRef.current.length;
-      // Define the start and end bin based on our ratios
+      // Define the start and end bin based on our ratios.
       const startBin = Math.floor(totalBins * startBinRatio);
       const endBin = Math.floor(totalBins * endBinRatio);
       const processedBinCount = endBin - startBin;
-      // Avoid division by zero by ensuring a minimum step of 1
+      // Avoid division by zero by ensuring a minimum step of 1.
       const step = Math.max(1, Math.floor(processedBinCount / barCount));
 
       const newBarHeights = [];
@@ -151,30 +155,36 @@ const GlobalAudioVisualizer = ({ src, title }) => {
       setBarHeights(newBarHeights);
       setPeakHeights((prevPeaks) =>
         prevPeaks.map((peak, i) => {
-          // Calculate boost multiplier and effective sensitivity
+          // Calculate boost multiplier so that lower frequencies (leftmost bars) get extra amplification.
           const boostMultiplier =
             1 + ((barCount - i) / barCount) * (lowFrequencyBoost - 1);
           const effectiveSensitivity = sensitivityFactor * boostMultiplier;
-          // Compute the effective height (with baseline and max limits)
-          let effectiveHeight = Math.max(
+          // Compute the raw height.
+          let computedHeight = Math.max(
             newBarHeights[i] * effectiveSensitivity,
             baseline
           );
-          effectiveHeight = Math.min(effectiveHeight, maxHeight);
-          // Update the peak: if the new effective height is higher than the peak, update immediately.
-          // Otherwise, decay the peak slowly (e.g., by 2 units per frame).
-          if (effectiveHeight > peak) {
-            return effectiveHeight;
-          } else {
-            return Math.max(effectiveHeight, peak - 2);
+          // --- NEW: More dynamic low-frequency reaction ---
+          // Treat the first 30% of bars as bass.
+          if (i < Math.floor(barCount * 0.5)) {
+            const bassThreshold = 255; // Adjust this threshold as needed.
+            if (computedHeight < bassThreshold) {
+              // When bass is quiet, barely move.
+              computedHeight = baseline + (computedHeight - baseline) * 0.9;
+            } else {
+              // When bass is loud, amplify the reaction.
+              computedHeight = baseline + (computedHeight - baseline) * 3;
+            }
           }
+          computedHeight = Math.min(computedHeight, maxHeight);
+          // Update the peak height with a slow decay.
         })
       );
     }
     animationIdRef.current = requestAnimationFrame(animate);
   };
 
-  // Toggle playback and start/stop the animation loop
+  // Toggle playback and start/stop the animation loop.
   const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -183,7 +193,7 @@ const GlobalAudioVisualizer = ({ src, title }) => {
       audio.pause();
       setIsPlaying(false);
       cancelAnimationFrame(animationIdRef.current);
-      // Reset bars to baseline when paused
+      // Reset bars to baseline when paused.
       setBarHeights(Array(barCount).fill(baseline));
     } else {
       if (audioContextRef.current.state === "suspended") {
@@ -195,7 +205,7 @@ const GlobalAudioVisualizer = ({ src, title }) => {
     }
   };
 
-  // Update progress based on the audio's current time
+  // Update progress based on the audio's current time.
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (audio && audio.duration) {
@@ -203,7 +213,7 @@ const GlobalAudioVisualizer = ({ src, title }) => {
     }
   };
 
-  // Functions to support click and drag seeking on the progress bar
+  // Functions to support click and drag seeking on the progress bar.
   const handleSeek = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
@@ -232,38 +242,63 @@ const GlobalAudioVisualizer = ({ src, title }) => {
 
   return (
     <div className="relative max-w-full">
-      {/* Player controls */}
-      <div className="w-full top-[2rem] max-w-[22rem] sm:ml-0 ml-2 absolute lg:top-[3rem] lg:left-[2rem] z-40 text-white p-4 border border-white rounded-3xl shadow-lg flex flex-row items-center">
-        <div className="flex flex-row items-center justify-center gap-x-2">
-          <button onClick={togglePlay} className="focus:outline-none">
-            {isPlaying ? (
-              <PauseIcon className="h-6 w-6" />
-            ) : (
-              <PlayIcon className="h-6 w-6" />
-            )}
-          </button>
-          <p>{title}</p>
+      {/* Flex container to hold both the player and the text */}
+      <div className="absolute top-[2rem] lg:top-[3rem] left-[2rem] flex flex-col lg:flex-row items-start gap-4 z-40">
+        {/* Player controls container with border */}
+        <div className="w-full max-w-[22rem] text-white p-4 border border-white rounded-3xl shadow-lg flex flex-row items-center">
+          <div className="flex flex-row items-center justify-center gap-x-2">
+            <button onClick={togglePlay} className="focus:outline-none">
+              {isPlaying ? (
+                <PauseIcon className="h-6 w-6" />
+              ) : (
+                <PlayIcon className="h-6 w-6" />
+              )}
+            </button>
+            <p>{title}</p>
+          </div>
+          <audio
+            ref={audioRef}
+            onTimeUpdate={handleTimeUpdate}
+            src={src}
+            preload="auto"
+          />
         </div>
-        <audio
-          ref={audioRef}
-          onTimeUpdate={handleTimeUpdate}
-          src={src}
-          preload="auto"
-        />
+        {/* Separate text box (not inside the bordered player) */}
+        <a
+          href="https://soundcloud.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-neutral-300 hover:text-white hover:underline p-4 flex flex-row flex-nowrap items-center justify-center max-w-full gap-x-3"
+        >
+          <p className="text-sm whitespace-nowrap">Checkout our music on </p>
+          <FontAwesomeIcon
+            icon={faSoundcloud}
+            className="w-10 h-auto text-orange-500 hover:text-orange-400"
+          />
+        </a>
       </div>
 
       {/* Visualizer and progress bar */}
       <div className="mt-16 flex flex-col items-center">
         <div className="flex space-x-1 items-end">
           {barHeights.map((height, index) => {
-            // For each bar, compute a boost multiplier so that lower frequencies (leftmost bars) get extra amplification.
+            // For each bar, compute the boost multiplier and effective sensitivity.
             const boostMultiplier =
               1 + ((barCount - index) / barCount) * (lowFrequencyBoost - 1);
             const effectiveSensitivity = sensitivityFactor * boostMultiplier;
-            const computedHeight = Math.max(
+            let computedHeight = Math.max(
               height * effectiveSensitivity,
               baseline
             );
+            // --- Apply low-frequency dynamic reaction ---
+            if (index < Math.floor(barCount * 0.3)) {
+              const bassThreshold = 50;
+              if (computedHeight < bassThreshold) {
+                computedHeight = baseline + (computedHeight - baseline) * 0.2;
+              } else {
+                computedHeight = baseline + (computedHeight - baseline) * 1.5;
+              }
+            }
             const limitedHeight = Math.min(computedHeight, maxHeight);
             const scaleY = limitedHeight / maxHeight;
             return (
@@ -282,15 +317,6 @@ const GlobalAudioVisualizer = ({ src, title }) => {
                     backgroundColor: getBarColor(index),
                   }}
                 />
-                {/* Peak indicator */}
-                {/* <div
-                  className="absolute left-0 right-0 h-[2px] bg-black"
-                  style={{
-                    // Position the peak indicator relative to the container.
-                    // (peakHeights[index] / maxHeight)*100 gives a percentage value.
-                    bottom: `${(peakHeights[index] / maxHeight) * 100}%`,
-                  }}
-                /> */}
               </div>
             );
           })}

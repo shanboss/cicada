@@ -9,11 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@react-three/drei": "^10.0.5",
+    "@react-three/fiber": "^9.1.0",
     "@stripe/react-stripe-js": "^3.3.0",
     "@stripe/stripe-js": "^5.9.2",
     "@supabase/supabase-js": "^2.48.1",
+    "@types/three": "^0.175.0",
     "motion": "^12.0.6",
     "next": "^15.2.1",
     "react": "^19.0.0",
@@ -21,7 +28,8 @@
     "react-dom": "^19.0.0",
     "react-slick": "^0.30.3",
     "resend": "^4.1.1",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "three": "^0.175.0"
   },
   "devDependencies": {
     "postcss": "^8",
