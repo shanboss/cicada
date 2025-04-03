@@ -20,7 +20,7 @@ const Events = () => {
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .order("date", { ascending: true });
+      .order("date", { ascending: false });
     if (error) {
       console.error("Error fetching events:", error);
     } else {
@@ -91,14 +91,15 @@ const Events = () => {
                     </p>{" "}
                   </div>
                   <div className="mt-4 w-full">
-                    <button
+                    {event.payment_link && (<button
                       onClick={() => handleNav(event.payment_link)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rounded-xl px-4 py-2 bg-indigo-800 w-full hover:bg-indigo-700 duration-200"
                     >
                       Buy Tickets
-                    </button>
+                    </button>)}
+                    
                   </div>
                 </div>
               </>
