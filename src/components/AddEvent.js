@@ -35,7 +35,7 @@ export default function AddEvent({ onEventAdded }) {
     setMessage("");
 
     const { event_title, desc, date, location, time, payment_link } = formData;
-    if (!event_title || !desc || !date || !location || !time || !payment_link) {
+    if (!event_title || !desc || !date || !location || !time) {
       setMessage("❌ All fields are required!");
       setLoading(false);
       return;
