@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { PlayIcon, PauseIcon } from "@heroicons/react/24/solid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSoundcloud } from "@fortawesome/free-brands-svg-icons";
+import Object from "./Object";
 
 /** Returns a different number of bars based on window width. */
 function getResponsiveBarCount(width) {
@@ -85,9 +86,12 @@ const GlobalAudioVisualizer = ({ src, title }) => {
     dataArrayRef.current = new Uint8Array(bufferLength);
 
     // Connect the audio element to the analyzer and then to the speakers.
-    sourceRef.current = audioContextRef.current.createMediaElementSource(audio);
-    sourceRef.current.connect(analyzerRef.current);
-    analyzerRef.current.connect(audioContextRef.current.destination);
+    if (!sourceRef.current) {
+      sourceRef.current =
+        audioContextRef.current.createMediaElementSource(audio);
+      sourceRef.current.connect(analyzerRef.current);
+      analyzerRef.current.connect(audioContextRef.current.destination);
+    }
 
     return () => {
       cancelAnimationFrame(animationIdRef.current);
