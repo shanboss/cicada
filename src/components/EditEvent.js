@@ -215,7 +215,6 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
                 type="payment_link"
                 value={formData.payment_link}
                 onChange={handleChange}
-                required
                 className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>

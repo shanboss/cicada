@@ -80,7 +80,7 @@ export default function Object() {
           color="blue"
         />
         <CicadaModel isHovered={isHovered} />
-        <OrbitControls enableZoom={false} />
+        {/* <OrbitControls enableZoom={false} /> */}
       </Canvas>
     </div>
   );

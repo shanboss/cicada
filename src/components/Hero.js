@@ -17,14 +17,14 @@ const Hero = () => {
       <WaveAnimation duration={10} /> */}
       {/* Hero Content (Above Background) */}
       {/* Add your hero content here */}
-      {/* <ThreeDPlayer
-        src={"/MakeMeFeel.mp3"}
-        title={"Vibes curated by Redline"}
-      /> */}
-      <GlobalAudioVisualizer
+      <ThreeDPlayer
         src={"/MakeMeFeel.mp3"}
         title={"Vibes curated by Redline"}
       />
+      {/* <GlobalAudioVisualizer
+        src={"/MakeMeFeel.mp3"}
+        title={"Vibes curated by Redline"}
+      /> */}
       {/* <Visualizer2 src={"/MakeMeFeel.mp3"} title={"Vibes curated by Redline"} /> */}
 
       {/*
