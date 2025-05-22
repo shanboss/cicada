@@ -55,7 +55,7 @@ const Footer = () => {
       </p>
       <div className="mt-4 flex justify-center items-center space-x-4">
         <a
-          href="https://www.instagram.com/utdcicada/"
+          href="https://www.instagram.com/cicada.dtx/"
           className="hover:text-blue-500"
         >
           <FontAwesomeIcon icon={faInstagram} className="w-8 h-auto" />
