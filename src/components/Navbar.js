@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faInstagram } from "@fortawesome/free-brands-svg-icons";
 import PrimaryButton from "./Button";
 import Image from "next/image";
 
@@ -82,6 +84,17 @@ const Navbar = () => {
           <li onClick={() => setIsOpen(false)}>
             <PrimaryButton label={"Join Now"} link={"/signup"} />
           </li>
+          <li>
+            <a
+              href="https://www.instagram.com/cicada.dtx/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-pink-400 transition-colors duration-200"
+              aria-label="Instagram"
+            >
+              <FontAwesomeIcon icon={faInstagram} className="w-6 h-6" />
+            </a>
+          </li>
         </ul>
 
         {/* Mobile Menu Button */}
@@ -139,6 +152,19 @@ const Navbar = () => {
           </li> */}
           <li onClick={() => setIsOpen(false)}>
             <PrimaryButton label={"Join Now"} link={"/signup"} />
+          </li>
+          <li>
+            <a
+              href="https://www.instagram.com/cicada.dtx/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 hover:text-pink-400 transition-colors duration-200"
+              aria-label="Instagram"
+              onClick={() => setIsOpen(false)}
+            >
+              <FontAwesomeIcon icon={faInstagram} className="w-6 h-6" />
+              <span>Instagram</span>
+            </a>
           </li>
         </ul>
       </div>

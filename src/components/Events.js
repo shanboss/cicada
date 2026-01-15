@@ -40,12 +40,34 @@ const Events = () => {
     setEditingEventId(null);
   };
 
+  // Separate events into upcoming and past
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to beginning of day
+
+  const upcomingEvents = events.filter((event) => {
+    const eventDate = new Date(event.date);
+    return eventDate >= today;
+  });
+
+  const pastEvents = events.filter((event) => {
+    const eventDate = new Date(event.date);
+    return eventDate < today;
+  });
+
   return (
     <section id="events" className="px-6 py-10 bg-black text-white">
-      <h2 className="text-4xl font-bold text-center">Upcoming Events</h2>
+      {/* Upcoming Events Section */}
+      <h2 className="text-4xl font-bold text-left max-w-5xl mx-auto">
+        Upcoming Events
+      </h2>
       <div className="mt-6 max-w-5xl mx-auto space-y-6">
         {loading && <p>Loading events...</p>}
-        {events.map((event) => (
+        {!loading && upcomingEvents.length === 0 && (
+          <p className="text-center text-gray-400">
+            No upcoming events at the moment.
+          </p>
+        )}
+        {upcomingEvents.map((event) => (
           <div
             key={event.id}
             className="p-4 border border-gray-700 rounded-lg flex flex-col md:flex-row gap-4"
@@ -59,7 +81,7 @@ const Events = () => {
             ) : (
               <>
                 {/* Left Column: Image */}
-                <div className="w-full md:w-1/2">
+                <div className="w-full md:w-1/3">
                   <img
                     src={event.image}
                     alt={event.event_title}
@@ -67,7 +89,7 @@ const Events = () => {
                   />
                 </div>
                 {/* Right Column: Details */}
-                <div className="w-full md:w-1/2 flex flex-col justify-center">
+                <div className="w-full md:w-2/3 flex flex-col justify-center">
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold">
                       {event.event_title}
@@ -91,15 +113,16 @@ const Events = () => {
                     </p>{" "}
                   </div>
                   <div className="mt-4 w-full">
-                    {event.payment_link && (<button
-                      onClick={() => handleNav(event.payment_link)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-xl px-4 py-2 bg-indigo-800 w-full hover:bg-indigo-700 duration-200"
-                    >
-                      Buy Tickets
-                    </button>)}
-                    
+                    {event.payment_link && (
+                      <button
+                        onClick={() => handleNav(event.payment_link)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl px-4 py-2 bg-indigo-800 w-full hover:bg-indigo-700 duration-200"
+                      >
+                        Buy Tickets
+                      </button>
+                    )}
                   </div>
                 </div>
               </>
@@ -107,6 +130,38 @@ const Events = () => {
           </div>
         ))}
       </div>
+
+      {/* Past Events Section */}
+      {!loading && pastEvents.length > 0 && (
+        <div className="mt-16">
+          <h2 className="text-4xl font-bold text-left max-w-5xl mx-auto">
+            Past Events
+          </h2>
+          <div className="mt-6 max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {pastEvents.map((event) => (
+              <div
+                key={event.id}
+                className="border border-gray-700 rounded-lg overflow-hidden hover:border-gray-500 transition-colors duration-200"
+              >
+                <img
+                  src={event.image}
+                  alt={event.event_title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold truncate">
+                    {event.event_title}
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">{event.date}</p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {event.location}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 };
