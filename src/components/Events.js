@@ -108,20 +108,15 @@ const Events = () => {
                         {event.date}
                       </span>
                     </p>
-                    <p className="text-gray-400 text-xs whitespace-pre-wrap">
-                      {event.desc}
-                    </p>{" "}
                   </div>
                   <div className="mt-4 w-full">
-                    {event.payment_link && (
-                      <button
-                        onClick={() => handleNav(event.payment_link)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-xl px-4 py-2 bg-indigo-800 w-full hover:bg-indigo-700 duration-200"
+                    {event.stripe_price_id && (
+                      <Link
+                        href={`/checkout/${event.id}`}
+                        className="block rounded-xl px-4 py-2 bg-indigo-800 w-full hover:bg-indigo-700 duration-200 text-center"
                       >
                         Buy Tickets
-                      </button>
+                      </Link>
                     )}
                   </div>
                 </div>

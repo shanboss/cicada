@@ -72,6 +72,15 @@ const Navbar = () => {
               Events
             </Link>
           </li>
+          <li>
+            <Link
+              href="/my-tickets"
+              className="hover:text-gray-400"
+              onClick={() => setIsOpen(false)}
+            >
+              My Tickets
+            </Link>
+          </li>
           {/* <li>
             <Link
               href="/gallery"
@@ -139,6 +148,15 @@ const Navbar = () => {
               onClick={() => setIsOpen(false)}
             >
               Events
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/my-tickets"
+              className="hover:text-gray-400"
+              onClick={() => setIsOpen(false)}
+            >
+              My Tickets
             </Link>
           </li>
           {/* <li>

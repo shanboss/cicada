@@ -10,7 +10,8 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
     date: "",
     time: "",
     location: "",
-    payment_link: "",
+    stripe_price_id: "",
+    ticket_price: "",
     image: "",
   });
   const [file, setFile] = useState(null);
@@ -26,7 +27,8 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
         date: event.date || "",
         time: event.time || "",
         location: event.location || "",
-        payment_link: event.payment_link || "",
+        stripe_price_id: event.stripe_price_id || "",
+        ticket_price: event.ticket_price || "",
         image: event.image || "",
       });
     }
@@ -51,7 +53,7 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
     setLoading(true);
     setMessage("");
 
-    const { event_title, desc, date, location, time, payment_link } = formData;
+    const { event_title, desc, date, location, time, stripe_price_id, ticket_price } = formData;
     if (!event_title || !desc || !date || !location || !time) {
       setMessage("❌ All fields are required!");
       setLoading(false);
@@ -103,7 +105,8 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
           location,
           time,
           image,
-          payment_link,
+          stripe_price_id,
+          ticket_price: ticket_price ? parseFloat(ticket_price) : null,
         })
         .eq("id", event.id);
 
@@ -125,7 +128,7 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
   };
 
   return (
-    <section className="bg-neutral-800 p-6 rounded-lg shadow-lg w-full my-4 max-w-md md:max-w-2xl mx-auto">
+    <section className="bg-neutral-800 p-6 rounded-lg shadow-lg w-full my-4 max-w-4xl mx-auto">
       <h2 className="text-xl font-bold mb-4 text-white">Edit Event</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Two-column grid for the input fields */}
@@ -205,16 +208,33 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
                 className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
-            {/* Payment Link */}
+            {/* Stripe Price ID */}
             <div>
               <label className="block text-sm font-medium text-neutral-300">
-                Payment Link
+                Stripe Price ID
               </label>
               <input
-                name="payment_link"
-                type="payment_link"
-                value={formData.payment_link}
+                name="stripe_price_id"
+                type="text"
+                value={formData.stripe_price_id}
                 onChange={handleChange}
+                placeholder="price_..."
+                className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+            {/* Ticket Price */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-300">
+                Ticket Price
+              </label>
+              <input
+                name="ticket_price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.ticket_price}
+                onChange={handleChange}
+                placeholder="0.00"
                 className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>

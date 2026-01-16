@@ -5,6 +5,7 @@ import AddEvent from "@/components/AddEvent";
 import EditEvent from "@/components/EditEvent";
 import { supabase } from "../../../lib/supabaseClient";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
 
 export default function AdminDashboard() {
   const [events, setEvents] = useState([]); // State to store events
@@ -41,7 +42,7 @@ export default function AdminDashboard() {
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .order("date", { ascending: true });
+      .order("date", { ascending: false });
 
     if (error) {
       console.error("Error fetching events:", error);
@@ -93,6 +94,22 @@ export default function AdminDashboard() {
     await supabase.auth.signOut();
     setUser(null);
   };
+
+  // ✅ Separate events into current and expired
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to beginning of day
+
+  const currentEvents = events.filter((event) => {
+    const eventDate = new Date(event.date);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate >= today;
+  });
+
+  const expiredEvents = events.filter((event) => {
+    const eventDate = new Date(event.date);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate < today;
+  });
 
   return (
     <div className="flex min-h-screen flex-col mt-12 items-center px-6 py-12 bg-neutral-900 text-neutral-300">
@@ -165,22 +182,28 @@ export default function AdminDashboard() {
         </form>
       ) : (
         <>
-          {/* ✅ Add Event Button & Modal */}
-          <div className="mt-6">
+          {/* ✅ Admin Actions */}
+          <div className="mt-6 w-full max-w-2xl flex gap-4 justify-center">
             <AddEvent onEventAdded={fetchEvents} />
+            <Link
+              href="/verify"
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center gap-2"
+            >
+              Verify Tickets
+            </Link>
           </div>
 
-          {/* ✅ Events List */}
+          {/* ✅ Current Events List */}
           <div className="mt-8 w-full max-w-2xl">
             <h2 className="text-2xl font-semibold mb-4">Current Events</h2>
 
             {loading ? (
               <p>Loading events...</p>
-            ) : events.length === 0 ? (
-              <p>No events available.</p>
+            ) : currentEvents.length === 0 ? (
+              <p>No current events available.</p>
             ) : (
               <ul className="space-y-4">
-                {events.map((event) => (
+                {currentEvents.map((event) => (
                   <li
                     key={event.id}
                     className="flex justify-between items-center p-4 bg-neutral-800 rounded-lg shadow-md"
@@ -189,9 +212,8 @@ export default function AdminDashboard() {
                       <h3 className="text-lg font-bold text-white">
                         {event.event_title}
                       </h3>
-                      <p className="text-neutral-400">{event.desc}</p>
                       <p className="text-sm text-neutral-500 mt-1">
-                        📅 {new Date(event.date).toLocaleDateString()}
+                        {new Date(event.date).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex flex-row">
@@ -213,6 +235,44 @@ export default function AdminDashboard() {
               </ul>
             )}
           </div>
+
+          {/* ✅ Expired Events List */}
+          {!loading && expiredEvents.length > 0 && (
+            <div className="mt-8 w-full max-w-2xl">
+              <h2 className="text-2xl font-semibold mb-4">Expired Events</h2>
+              <ul className="space-y-4">
+                {expiredEvents.map((event) => (
+                  <li
+                    key={event.id}
+                    className="flex justify-between items-center p-4 bg-neutral-800 rounded-lg shadow-md opacity-75"
+                  >
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        {event.event_title}
+                      </h3>
+                      <p className="text-sm text-neutral-500 mt-1">
+                        {new Date(event.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex flex-row">
+                      <button
+                        onClick={() => setEditingEvent(event)}
+                        className="ml-4 p-2 bg-blue-600 rounded-full hover:bg-blue-500 transition"
+                      >
+                        <PencilSquareIcon className="h-5 w-5 text-white" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(event.id)}
+                        className="ml-4 p-2 bg-red-600 rounded-full hover:bg-red-500 transition"
+                      >
+                        <TrashIcon className="h-5 w-5 text-white" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
     </div>

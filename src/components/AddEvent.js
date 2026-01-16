@@ -9,6 +9,8 @@ export default function AddEvent({ onEventAdded }) {
     date: "",
     location: "",
     time: "",
+    stripe_price_id: "",
+    ticket_price: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -34,7 +36,7 @@ export default function AddEvent({ onEventAdded }) {
     setLoading(true);
     setMessage("");
 
-    const { event_title, desc, date, location, time, payment_link } = formData;
+    const { event_title, desc, date, location, time, stripe_price_id, ticket_price } = formData;
     if (!event_title || !desc || !date || !location || !time) {
       setMessage("❌ All fields are required!");
       setLoading(false);
@@ -78,7 +80,16 @@ export default function AddEvent({ onEventAdded }) {
       const { error } = await supabase
         .from("events")
         .insert([
-          { event_title, desc, date, time, location, image, payment_link },
+          { 
+            event_title, 
+            desc, 
+            date, 
+            time, 
+            location, 
+            image, 
+            stripe_price_id,
+            ticket_price: ticket_price ? parseFloat(ticket_price) : null,
+          },
         ]);
 
       if (error) {
@@ -91,7 +102,8 @@ export default function AddEvent({ onEventAdded }) {
           date: "",
           location: "",
           time: "",
-          payment_link: "",
+          stripe_price_id: "",
+          ticket_price: "",
         });
         setFile(null); // Reset file input
         setTimeout(() => {
@@ -197,17 +209,34 @@ export default function AddEvent({ onEventAdded }) {
                 />
               </div>
 
-              {/* Payment Link */}
+              {/* Stripe Price ID */}
               <div>
                 <label className="block text-sm font-medium text-neutral-300">
-                  Payment Link
+                  Stripe Price ID
                 </label>
                 <input
-                  name="payment_link"
-                  type="payment_link"
-                  value={formData.payment_link}
+                  name="stripe_price_id"
+                  type="text"
+                  value={formData.stripe_price_id}
                   onChange={handleChange}
+                  placeholder="price_..."
+                  className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
 
+              {/* Ticket Price */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-300">
+                  Ticket Price
+                </label>
+                <input
+                  name="ticket_price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.ticket_price}
+                  onChange={handleChange}
+                  placeholder="0.00"
                   className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
