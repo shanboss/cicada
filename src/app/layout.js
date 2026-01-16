@@ -29,13 +29,17 @@ export default function RootLayout({ children }) {
 
     getSession();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
   return (
     <html lang="en">
