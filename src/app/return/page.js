@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../../lib/supabaseClient";
 
-export default function ReturnPage() {
+function ReturnPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState("loading");
@@ -102,7 +102,7 @@ export default function ReturnPage() {
         {status === "processing" && (
           <div className="text-center">
             <div className="animate-pulse mb-4">
-              <div className="text-6xl mb-4">⏳</div>
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500 mx-auto mb-4"></div>
             </div>
             <h1 className="text-2xl font-bold mb-2">Payment Processing</h1>
             <p className="text-gray-400 mb-6">
@@ -119,7 +119,6 @@ export default function ReturnPage() {
 
         {status === "success" && (
           <div className="bg-gray-900 rounded-lg p-8 text-center border border-green-500">
-            <div className="text-6xl mb-4">🎉</div>
             <h1 className="text-3xl font-bold mb-4 text-green-400">
               Payment Successful!
             </h1>
@@ -142,15 +141,15 @@ export default function ReturnPage() {
                 {tickets[0]?.events && (
                   <div className="mb-6 text-left bg-purple-900 bg-opacity-30 rounded-lg p-4">
                     <p className="text-lg font-semibold text-white">{tickets[0].events.event_title}</p>
-                    <p className="text-sm text-gray-300 mt-2">📅 {tickets[0].events.date}</p>
-                    <p className="text-sm text-gray-300">🕐 {tickets[0].events.time}</p>
-                    <p className="text-sm text-gray-300">📍 {tickets[0].events.location}</p>
+                    <p className="text-sm text-gray-300 mt-2">Date: {tickets[0].events.date}</p>
+                    <p className="text-sm text-gray-300">Time: {tickets[0].events.time}</p>
+                    <p className="text-sm text-gray-300">Location: {tickets[0].events.location}</p>
                   </div>
                 )}
 
                 {tickets.length > 1 && (
                   <div className="bg-purple-900 bg-opacity-30 rounded-lg p-3 mb-4 border border-purple-700">
-                    <p className="text-sm text-purple-300">💡 <strong>Tip:</strong> Each person can use their own QR code for entry</p>
+                    <p className="text-sm text-purple-300"><strong>Tip:</strong> Each person can use their own QR code for entry</p>
                   </div>
                 )}
 
@@ -179,7 +178,7 @@ export default function ReturnPage() {
             ) : (
               <div className="bg-black rounded-lg p-4 mb-6 border border-yellow-600">
                 <p className="text-sm text-yellow-300">
-                  ⏳ Generating your ticket(s)... This will appear shortly!
+                  Generating your ticket(s)... This will appear shortly!
                 </p>
               </div>
             )}
@@ -194,10 +193,10 @@ export default function ReturnPage() {
               <div className="bg-purple-900 bg-opacity-30 rounded-lg p-4 border border-purple-700">
                 <h3 className="font-semibold mb-2">What's Next?</h3>
                 <ul className="text-sm text-gray-300 space-y-2 text-left">
-                  <li>✓ {tickets.length > 0 ? `Screenshot the QR code${tickets.length > 1 ? 's' : ''} above` : "Check your email for your ticket(s)"}</li>
-                  <li>✓ Save your ticket{tickets.length > 1 ? 's' : ''} for the event</li>
-                  <li>✓ Present QR code at the event entrance</li>
-                  {tickets.length > 1 && <li>✓ Each person uses their own QR code</li>}
+                  <li>{tickets.length > 0 ? `Screenshot the QR code${tickets.length > 1 ? 's' : ''} above` : "Check your email for your ticket(s)"}</li>
+                  <li>Save your ticket{tickets.length > 1 ? 's' : ''} for the event</li>
+                  <li>Present QR code at the event entrance</li>
+                  {tickets.length > 1 && <li>Each person uses their own QR code</li>}
                 </ul>
               </div>
 
@@ -221,7 +220,6 @@ export default function ReturnPage() {
 
         {status === "error" && (
           <div className="bg-gray-900 rounded-lg p-8 text-center border border-red-500">
-            <div className="text-6xl mb-4">❌</div>
             <h1 className="text-3xl font-bold mb-4 text-red-400">
               Something Went Wrong
             </h1>
@@ -253,6 +251,23 @@ export default function ReturnPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ReturnPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black text-white flex items-center justify-center px-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <ReturnPageContent />
+    </Suspense>
   );
 }
 
