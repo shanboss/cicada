@@ -29,7 +29,7 @@ const Navbar = () => {
           .select("first_name, user_role")
           .eq("id", user.id)
           .single();
-        
+
         // Set initial from profile first, then fallback to user_metadata
         if (profile?.first_name) {
           setUserInitial(profile.first_name.charAt(0).toUpperCase());
@@ -38,8 +38,10 @@ const Navbar = () => {
         } else {
           setUserInitial(user?.email?.charAt(0).toUpperCase() || "U");
         }
-        
-        setIsAdmin(profile?.user_role === "admin" || user.user_metadata?.role === "admin");
+
+        setIsAdmin(
+          profile?.user_role === "admin" || user.user_metadata?.role === "admin"
+        );
       }
     };
 
@@ -49,7 +51,7 @@ const Navbar = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         // Fetch profile to get first name and role
         const { data: profile } = await supabase
@@ -57,17 +59,22 @@ const Navbar = () => {
           .select("first_name, user_role")
           .eq("id", session.user.id)
           .single();
-        
+
         // Set initial from profile first, then fallback to user_metadata
         if (profile?.first_name) {
           setUserInitial(profile.first_name.charAt(0).toUpperCase());
         } else if (session.user?.user_metadata?.first_name) {
-          setUserInitial(session.user.user_metadata.first_name.charAt(0).toUpperCase());
+          setUserInitial(
+            session.user.user_metadata.first_name.charAt(0).toUpperCase()
+          );
         } else {
           setUserInitial(session.user?.email?.charAt(0).toUpperCase() || "U");
         }
-        
-        setIsAdmin(profile?.user_role === "admin" || session.user.user_metadata?.role === "admin");
+
+        setIsAdmin(
+          profile?.user_role === "admin" ||
+            session.user.user_metadata?.role === "admin"
+        );
       } else {
         setUserInitial("");
         setIsAdmin(false);
@@ -317,53 +324,17 @@ const Navbar = () => {
               </li>
             </>
           ) : (
-            <>
-              <li>
-                <div className="flex items-center space-x-3 px-4 py-2">
-                  <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-semibold flex items-center justify-center">
-                    {userInitial || "U"}
-                  </div>
-                  <div>
-                    <p className="text-sm text-white font-medium">
-                      {user?.user_metadata?.first_name}{" "}
-                      {user?.user_metadata?.last_name}
-                    </p>
-                    <p className="text-xs text-neutral-400">{user?.email}</p>
-                  </div>
-                </div>
-              </li>
-              <li>
-                <Link
-                  href="/profile"
-                  className="block px-4 py-2 text-sm text-neutral-300 hover:bg-neutral-700 rounded"
-                  onClick={() => setIsOpen(false)}
-                >
-                  My Profile
-                </Link>
-              </li>
-              {isAdmin && (
-                <li>
-                  <Link
-                    href="/admin"
-                    className="block px-4 py-2 text-sm text-indigo-400 hover:bg-neutral-700 rounded"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Admin Dashboard
-                  </Link>
-                </li>
-              )}
-              <li>
-                <button
-                  onClick={() => {
-                    handleSignOut();
-                    setIsOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-neutral-700 rounded"
-                >
-                  Sign Out
-                </button>
-              </li>
-            </>
+            <li>
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setIsOpen(false);
+                }}
+                className="text-red-400 hover:text-red-300 transition-colors"
+              >
+                Sign Out
+              </button>
+            </li>
           )}
           <li>
             <a
