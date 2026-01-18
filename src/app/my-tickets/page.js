@@ -80,7 +80,8 @@ export default function MyTicketsPage() {
         <div className="max-w-md w-full bg-gray-900 rounded-lg p-8 border border-purple-700 text-center">
           <h1 className="text-3xl font-bold mb-4">My Tickets</h1>
           <p className="text-gray-400 mb-8">
-            Please sign in or create an account to view your tickets. Tickets purchased with your email will appear here.
+            Please sign in or create an account to view your tickets. Tickets
+            purchased with your email will appear here.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -128,16 +129,26 @@ export default function MyTicketsPage() {
           </div>
         )}
 
-        <div className="space-y-6">
-          {tickets.map((ticket) => (
-            <div
-              key={ticket.id}
-              className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-purple-700 transition-colors"
-            >
-              <div className="md:flex">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tickets.map((ticket) => {
+            const handleSaveQR = () => {
+              // Create a link element to download the QR code
+              const link = document.createElement("a");
+              link.href = ticket.qr_code_data;
+              link.download = `ticket-${ticket.ticket_number}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            };
+
+            return (
+              <div
+                key={ticket.id}
+                className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-purple-700 transition-colors aspect-square flex flex-col relative group"
+              >
                 {/* Event Image */}
                 {ticket.events?.image && (
-                  <div className="md:w-1/3">
+                  <div className="w-full h-32 flex-shrink-0">
                     <img
                       src={ticket.events.image}
                       alt={ticket.events.event_title}
@@ -147,53 +158,50 @@ export default function MyTicketsPage() {
                 )}
 
                 {/* Ticket Details */}
-                <div className="flex-1 p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-2xl font-bold mb-2">
-                        {ticket.events?.event_title || "Event"}
-                      </h3>
-                      {ticket.events && (
-                        <div className="text-gray-400 space-y-1">
-                          <p>Date: {ticket.events.date}</p>
-                          <p>Time: {ticket.events.time}</p>
-                          <p>Location: {ticket.events.location}</p>
-                        </div>
-                      )}
-                    </div>
+                <div className="flex-1 p-4 flex flex-col">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-lg font-bold line-clamp-2 flex-1">
+                      {ticket.events?.event_title || "Event"}
+                    </h3>
                     {ticket.used ? (
-                      <span className="px-3 py-1 bg-gray-700 text-gray-400 rounded-full text-sm">
+                      <span className="px-2 py-1 bg-gray-700 text-gray-400 rounded-full text-xs ml-2 flex-shrink-0">
                         Used
                       </span>
                     ) : (
-                      <span className="px-3 py-1 bg-green-600 text-white rounded-full text-sm">
+                      <span className="px-2 py-1 bg-green-600 text-white rounded-full text-xs ml-2 flex-shrink-0">
                         Valid
                       </span>
                     )}
                   </div>
 
-                  {/* QR Code */}
-                  <div className="mt-4 p-4 bg-white rounded-lg inline-block">
-                    <img
-                      src={ticket.qr_code_data}
-                      alt="Ticket QR Code"
-                      className="w-40 h-40"
-                    />
-                  </div>
+                  {ticket.events && (
+                    <div className="text-gray-400 text-xs space-y-0.5 mb-3">
+                      <p className="truncate">Date: {ticket.events.date}</p>
+                      <p className="truncate">Time: {ticket.events.time}</p>
+                      <p className="truncate">
+                        Location: {ticket.events.location}
+                      </p>
+                    </div>
+                  )}
 
-                  <div className="mt-4 pt-4 border-t border-gray-800">
-                    <p className="text-sm text-gray-500">
-                      Ticket #: {ticket.ticket_number}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Purchased:{" "}
-                      {new Date(ticket.purchase_date).toLocaleDateString()}
-                    </p>
+                  <div className="mt-auto pt-3 border-t border-gray-800 text-xs text-gray-500">
+                    <p className="truncate">#{ticket.ticket_number}</p>
+                    <p>{new Date(ticket.purchase_date).toLocaleDateString()}</p>
                   </div>
                 </div>
+
+                {/* Save Button - Shows on Hover */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <button
+                    onClick={handleSaveQR}
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors shadow-lg"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
