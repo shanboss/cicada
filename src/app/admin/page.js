@@ -21,13 +21,58 @@ export default function AdminDashboard() {
   // ✅ Listen to auth state changes and check admin role
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+      try {
+        // Try getSession first (doesn't throw errors)
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          // If no session, try getUser as fallback
+          const {
+            data: { user },
+            error: userError,
+          } = await supabase.auth.getUser();
+          
+          if (userError) {
+            // Handle AuthSessionMissingError gracefully
+            if (userError.message?.includes("session") || userError.message?.includes("Auth session missing")) {
+              console.log("[AdminPage] No active session, user not authenticated");
+              setUser(null);
+              setIsAdmin(false);
+              return;
+            } else {
+              console.error("[AdminPage] Error getting user:", userError);
+              setUser(null);
+              setIsAdmin(false);
+              return;
+            }
+          }
+          
+          setUser(user);
+          if (user) {
+            await checkAdminRole(user);
+          } else {
+            setIsAdmin(false);
+          }
+        } else {
+          setUser(session.user);
+          if (session.user) {
+            await checkAdminRole(session.user);
+          } else {
+            setIsAdmin(false);
+          }
+        }
+      } catch (err) {
+        console.error("[AdminPage] Unexpected error getting user:", err);
+        setUser(null);
+        setIsAdmin(false);
+      }
+    };
 
-      // Fetch user profile to check role
-      if (user) {
+    const checkAdminRole = async (user) => {
+      try {
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("user_role")
@@ -41,7 +86,8 @@ export default function AdminDashboard() {
           // Fallback: check user_metadata for role
           setIsAdmin(user.user_metadata?.role === "admin");
         }
-      } else {
+      } catch (err) {
+        console.error("[AdminPage] Error checking admin role:", err);
         setIsAdmin(false);
       }
     };
@@ -50,22 +96,40 @@ export default function AdminDashboard() {
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log("[AdminPage] Auth state changed:", _event);
+        
+        // Handle token refresh events
+        if (_event === 'TOKEN_REFRESHED') {
+          console.log("[AdminPage] Token refreshed successfully");
+          return;
+        } else if (_event === 'SIGNED_OUT') {
+          console.log("[AdminPage] User signed out");
+          setUser(null);
+          setIsAdmin(false);
+          return;
+        }
+        
         setUser(session?.user ?? null);
 
         if (session?.user) {
           // Fetch user profile to check role
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("user_role")
-            .eq("id", session.user.id)
-            .single();
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("user_role")
+              .eq("id", session.user.id)
+              .single();
 
-          if (!profileError && profile) {
-            setUserProfile(profile);
-            setIsAdmin(profile.user_role === "admin");
-          } else {
-            // Fallback: check user_metadata for role
-            setIsAdmin(session.user.user_metadata?.role === "admin");
+            if (!profileError && profile) {
+              setUserProfile(profile);
+              setIsAdmin(profile.user_role === "admin");
+            } else {
+              // Fallback: check user_metadata for role
+              setIsAdmin(session.user.user_metadata?.role === "admin");
+            }
+          } catch (err) {
+            console.error("[AdminPage] Error fetching profile in auth change:", err);
+            setIsAdmin(false);
           }
         } else {
           setIsAdmin(false);
