@@ -15,21 +15,61 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState(""); // State for password input
   const [error, setError] = useState(""); // State for error message
   const [user, setUser] = useState(null); // State to store user info
+  const [userProfile, setUserProfile] = useState(null); // State to store user profile with role
+  const [isAdmin, setIsAdmin] = useState(false); // State to track if user is admin
 
-  // ✅ Listen to auth state changes
+  // ✅ Listen to auth state changes and check admin role
   useEffect(() => {
     const getUser = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
+
+      // Fetch user profile to check role
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("user_role")
+          .eq("id", user.id)
+          .single();
+
+        if (!profileError && profile) {
+          setUserProfile(profile);
+          setIsAdmin(profile.user_role === "admin");
+        } else {
+          // Fallback: check user_metadata for role
+          setIsAdmin(user.user_metadata?.role === "admin");
+        }
+      } else {
+        setIsAdmin(false);
+      }
     };
 
     getUser();
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setUser(session?.user ?? null);
+
+        if (session?.user) {
+          // Fetch user profile to check role
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("user_role")
+            .eq("id", session.user.id)
+            .single();
+
+          if (!profileError && profile) {
+            setUserProfile(profile);
+            setIsAdmin(profile.user_role === "admin");
+          } else {
+            // Fallback: check user_metadata for role
+            setIsAdmin(session.user.user_metadata?.role === "admin");
+          }
+        } else {
+          setIsAdmin(false);
+        }
       }
     );
 
@@ -123,8 +163,23 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* ✅ Show login form if not logged in */}
-      {!user ? (
+      {/* ✅ Show access denied if not admin */}
+      {user && !isAdmin ? (
+        <div className="mt-6 w-full max-w-2xl bg-red-900/20 border border-red-500 p-6 rounded-lg">
+          <h2 className="text-2xl font-semibold mb-4 text-red-400">
+            Access Denied
+          </h2>
+          <p className="text-neutral-300">
+            You do not have permission to access this page. Admin role required.
+          </p>
+          <Link
+            href="/"
+            className="mt-4 inline-block text-indigo-400 hover:text-indigo-300 underline"
+          >
+            Return to Home
+          </Link>
+        </div>
+      ) : !user ? (
         <form
           onSubmit={handleLogin}
           className="mt-6 w-full max-w-md bg-neutral-800 p-6 rounded-lg shadow-md"

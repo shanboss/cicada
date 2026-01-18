@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
-import { Html5QrcodeScanType } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 import { supabase } from "../../../lib/supabaseClient";
 import Link from "next/link";
 
@@ -54,14 +53,22 @@ export default function VerifyTicketPage() {
     if (!scanning) {
       // Clean up scanner when scanning stops
       if (scannerRef.current) {
-        scannerRef.current.clear();
-        scannerRef.current = null;
+        scannerRef.current
+          .stop()
+          .then(() => {
+            scannerRef.current.clear();
+            scannerRef.current = null;
+          })
+          .catch((err) => {
+            console.error("Error stopping scanner:", err);
+            scannerRef.current = null;
+          });
       }
       return;
     }
 
     // Wait for DOM to update
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const element = document.getElementById("qr-reader");
       if (!element) {
         console.error("QR reader element not found");
@@ -78,23 +85,52 @@ export default function VerifyTicketPage() {
         const screenWidth = window.innerWidth;
         const qrboxSize = isMobile ? Math.min(250, screenWidth * 0.75) : 250;
 
-        // Initialize scanner with mobile-optimized settings
+        // Find back camera
+        let selectedCameraId = null;
+        try {
+          const devices = await Html5Qrcode.getCameras();
+          // Look for back camera (case-insensitive)
+          const backCamera = devices.find(
+            (device) =>
+              device.label && device.label.toLowerCase().includes("back")
+          );
+
+          if (backCamera) {
+            selectedCameraId = backCamera.id;
+          } else if (devices.length > 0) {
+            // Fallback: try to find environment-facing camera
+            // On some devices, back camera might be labeled differently
+            const envCamera = devices.find(
+              (device) =>
+                device.label &&
+                (device.label.toLowerCase().includes("environment") ||
+                  device.label.toLowerCase().includes("rear") ||
+                  device.label.toLowerCase().includes("rear-facing"))
+            );
+            selectedCameraId = envCamera ? envCamera.id : devices[0].id;
+          }
+        } catch (err) {
+          console.warn("Could not enumerate cameras:", err);
+        }
+
+        // Initialize scanner
+        const html5QrCode = new Html5Qrcode("qr-reader");
+
         const config = {
           fps: 10,
           qrbox: { width: qrboxSize, height: qrboxSize },
           aspectRatio: 1.0,
-          // Mobile-friendly settings
-          rememberLastUsedCamera: true,
-          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+          disableFlip: false,
         };
 
-        const scanner = new Html5QrcodeScanner(
-          "qr-reader",
-          config,
-          false // verbose = false
-        );
+        // Start scanning with back camera
+        const cameraIdOrConfig = selectedCameraId || {
+          facingMode: "environment",
+        };
 
-        scanner.render(
+        await html5QrCode.start(
+          cameraIdOrConfig,
+          config,
           (decodedText) => {
             // Keep scanner running - don't stop it
             setCameraError(null);
@@ -113,32 +149,35 @@ export default function VerifyTicketPage() {
 
             verifyTicket(ticketNumber);
           },
-          (error) => {
+          (errorMessage) => {
             // Handle camera permission errors
-            if (error && typeof error === "string") {
+            if (errorMessage && typeof errorMessage === "string") {
               if (
-                error.includes("Permission") ||
-                error.includes("permission")
+                errorMessage.includes("Permission") ||
+                errorMessage.includes("permission")
               ) {
                 setCameraError(
                   "Camera permission denied. Please allow camera access in your browser settings."
                 );
               } else if (
-                error.includes("NotFound") ||
-                error.includes("not found")
+                errorMessage.includes("NotFound") ||
+                errorMessage.includes("not found")
               ) {
                 setCameraError(
                   "No camera found. Please ensure your device has a camera."
                 );
-              } else if (!error.includes("NotFoundException")) {
+              } else if (
+                !errorMessage.includes("NotFoundException") &&
+                !errorMessage.includes("No QR code found")
+              ) {
                 // Only log meaningful errors, ignore common scanning errors
-                console.error("Scanner error:", error);
+                console.error("Scanner error:", errorMessage);
               }
             }
           }
         );
 
-        scannerRef.current = scanner;
+        scannerRef.current = html5QrCode;
       } catch (error) {
         console.error("Error starting scanner:", error);
         const errorMessage = error.message || "Failed to start camera";
@@ -147,25 +186,46 @@ export default function VerifyTicketPage() {
         );
         setScanning(false);
       }
-    }, 100); // Small delay to ensure DOM is updated
+    }, 150); // Small delay to ensure DOM is updated
 
     return () => {
       clearTimeout(timer);
       // Clean up scanner on unmount or when scanning changes
       if (scannerRef.current) {
-        scannerRef.current.clear();
-        scannerRef.current = null;
+        scannerRef.current
+          .stop()
+          .then(() => {
+            scannerRef.current.clear();
+            scannerRef.current = null;
+          })
+          .catch((err) => {
+            console.error("Error cleaning up scanner:", err);
+            scannerRef.current = null;
+          });
       }
     };
   }, [scanning]);
 
   const stopScanner = () => {
     if (scannerRef.current) {
-      scannerRef.current.clear();
-      scannerRef.current = null;
+      scannerRef.current
+        .stop()
+        .then(() => {
+          scannerRef.current.clear();
+          scannerRef.current = null;
+          setScanning(false);
+          setCameraError(null);
+        })
+        .catch((err) => {
+          console.error("Error stopping scanner:", err);
+          scannerRef.current = null;
+          setScanning(false);
+          setCameraError(null);
+        });
+    } else {
+      setScanning(false);
+      setCameraError(null);
     }
-    setScanning(false);
-    setCameraError(null);
   };
 
   const verifyTicket = async (ticketNumber) => {

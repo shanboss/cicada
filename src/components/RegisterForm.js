@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import CheckBox from "./CheckBox";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -10,14 +11,9 @@ export default function RegisterForm() {
     email: "",
     firstName: "",
     lastName: "",
-    gender: "",
     phone_number: "",
-    role_preference: "",
-    favorite_artist: "",
-    favorite_set: "",
-    favorite_genre: "",
-    cicada_interest: "",
-    subscribed: true,
+    password: "",
+    verifyPassword: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -40,82 +36,106 @@ export default function RegisterForm() {
       email,
       firstName,
       lastName,
-      gender,
       phone_number,
-      role_preference,
-      favorite_artist,
-      favorite_set,
-      favorite_genre,
-      cicada_interest,
-      subscribed,
+      password,
+      verifyPassword,
     } = formData;
 
     // Validate Email Format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setMessage("Invalid email address! Please enter a valid email. 🚫");
+      setMessage("Invalid email address! Please enter a valid email.");
+      setLoading(false);
+      return;
+    }
+
+    // Validate Password
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters long.");
+      setLoading(false);
+      return;
+    }
+
+    // Validate Password Match
+    if (password !== verifyPassword) {
+      setMessage("Passwords do not match!");
       setLoading(false);
       return;
     }
 
     try {
-      // Insert into Supabase
-      const { error } = await supabase.from("subscribers").insert([
+      // Sign up user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            phone_number: phone_number || null,
+          },
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (authError) {
+        console.error("Auth Error:", authError.message);
+        setMessage("Error: " + authError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!authData.user) {
+        setMessage("Failed to create account. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Insert into profiles table (trigger should handle this, but doing it manually as fallback)
+      const { error: insertError } = await supabase.from("profiles").insert([
         {
-          email,
+          id: authData.user.id,
           first_name: firstName,
           last_name: lastName,
-          gender,
-          phone_number,
-          role_preference,
-          favorite_artist,
-          favorite_set,
-          favorite_genre,
-          cicada_interest,
-          subscribed,
+          phone_number: phone_number || null,
         },
       ]);
 
-      if (error) {
-        if (error.code === "23505") {
-          setMessage("This email is already registered! 🚫");
-        } else {
-          console.error("Supabase Insert Error:", error.message);
-          setMessage("Error: " + error.message);
-        }
-        setLoading(false);
-        return;
+      if (insertError && insertError.code !== "23505") {
+        // Ignore duplicate key errors (profile might already exist from trigger)
+        console.error("Profiles Insert Error:", insertError.message);
+        // Don't fail the registration if profile insert fails (trigger might have already created it)
+      }
+
+      // Check if email confirmation is required
+      if (authData.user && !authData.session) {
+        // Email confirmation required
+        setMessage(
+          "Account created! Please check your email to confirm your account before signing in."
+        );
+      } else {
+        // User is automatically signed in (if email confirmation is disabled)
+        setMessage("Account created successfully! Redirecting to home...");
+        setTimeout(() => {
+          router.push("/");
+        }, 2000);
       }
     } catch (err) {
       console.error("Unexpected Error:", err);
       setMessage("An unexpected error occurred. Please try again.");
     }
-
-    // Send Welcome Email
-    await fetch("/api/sendEmail", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, firstName }),
-    });
-    // Success message
-    setMessage("Success! Redirecting to home...");
-
-    // Wait 3 seconds, then navigate to home
-    setTimeout(() => {
-      router.push("/");
-    }, 3000);
     setLoading(false);
   };
 
   return (
     <div className="flex min-h-screen flex-1 flex-col justify-center items-center px-6 py-12 lg:px-8 bg-neutral-900 text-neutral-300">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
         <h2 className="text-center text-4xl font-bold tracking-tight">
           JOIN CICADA
         </h2>
       </div>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md bg-neutral-800 p-6 rounded-lg shadow-lg">
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-2xl bg-neutral-800 p-6 rounded-lg shadow-lg">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email */}
           <div>
@@ -204,177 +224,49 @@ export default function RegisterForm() {
             </div>
           </div>
 
-          {/* Gender */}
-          <div className="flex flex-col gap-3">
-            <label
-              htmlFor="phone_number"
-              className="block text-sm font-medium text-neutral-300"
-            >
-              Gender
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="gender"
-                value="male"
-                checked={formData.gender === "male"}
-                onChange={handleChange}
-                className="form-radio text-blue-600 h-5 w-5"
-              />
-              <span className="text-sm text-gray-200">Male</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="gender"
-                value="female"
-                checked={formData.gender === "female"}
-                onChange={handleChange}
-                className="form-radio text-pink-600 h-5 w-5"
-              />
-              <span className="text-sm text-gray-200">Female</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="gender"
-                value="prefer-not-to-say"
-                checked={formData.gender === "prefer-not-to-say"}
-                onChange={handleChange}
-                className="form-radio text-gray-400 h-5 w-5"
-              />
-              <span className="text-sm text-gray-200">Prefer not to say</span>
-            </label>
-          </div>
-
-          {/* Role Preference */}
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-neutral-300">
-              Would you attend Cicada Meetings as a DJ or Raver?
-            </p>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="role_preference"
-                value="raver"
-                checked={formData.role_preference === "raver"}
-                onChange={handleChange}
-                className="form-radio text-green-600 h-5 w-5"
-              />
-              <span className="text-sm text-gray-200">Raver</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="role_preference"
-                value="DJ"
-                checked={formData.role_preference === "DJ"}
-                onChange={handleChange}
-                className="form-radio text-purple-600 h-5 w-5"
-              />
-              <span className="text-sm text-gray-200">DJ</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="role_preference"
-                value="both"
-                checked={formData.role_preference === "both"}
-                onChange={handleChange}
-                className="form-radio text-yellow-600 h-5 w-5"
-              />
-              <span className="text-sm text-gray-200">Both</span>
-            </label>
-          </div>
-
-          {/* Favorite Artist */}
+          {/* Password */}
           <div>
             <label
-              htmlFor="favorite_artist"
+              htmlFor="password"
               className="block text-sm font-medium text-neutral-300"
             >
-              Favorite Artist
+              Password
             </label>
             <div className="mt-2">
               <input
-                id="favorite_artist"
-                name="favorite_artist"
-                type="text"
-                value={formData.favorite_artist}
+                id="password"
+                name="password"
+                type="password"
+                required
+                autoComplete="new-password"
+                value={formData.password}
                 onChange={handleChange}
                 className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 placeholder-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Favorite Set */}
+          {/* Verify Password */}
           <div>
             <label
-              htmlFor="favorite_set"
+              htmlFor="verifyPassword"
               className="block text-sm font-medium text-neutral-300"
             >
-              Favorite Set
+              Verify Password
             </label>
             <div className="mt-2">
               <input
-                id="favorite_set"
-                name="favorite_set"
-                type="text"
-                value={formData.favorite_set}
+                id="verifyPassword"
+                name="verifyPassword"
+                type="password"
+                required
+                autoComplete="new-password"
+                value={formData.verifyPassword}
                 onChange={handleChange}
                 className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 placeholder-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
           </div>
-
-          {/* Favorite Genre */}
-          <div>
-            <label
-              htmlFor="favorite_genre"
-              className="block text-sm font-medium text-neutral-300"
-            >
-              Favorite Genre
-            </label>
-            <div className="mt-2">
-              <input
-                id="favorite_genre"
-                name="favorite_genre"
-                type="text"
-                value={formData.favorite_genre}
-                onChange={handleChange}
-                className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 placeholder-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Cicada Interest */}
-          <div>
-            <label
-              htmlFor="cicada_interest"
-              className="block text-sm font-medium text-neutral-300"
-            >
-              What would you like to see at future Cicada Meetings
-            </label>
-            <div className="mt-2">
-              <input
-                id="cicada_interest"
-                name="cicada_interest"
-                type="text"
-                value={formData.cicada_interest}
-                onChange={handleChange}
-                className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 placeholder-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Checkbox */}
-          <CheckBox
-            label="Sign up for our mailing list"
-            description="Get notified about upcoming events"
-            checked={formData.subscribed}
-            onChange={handleChange}
-            name="subscribed"
-          />
 
           {/* Submit Button */}
           <div>
@@ -383,8 +275,19 @@ export default function RegisterForm() {
               className="flex w-full justify-center rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-indigo-400 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500"
               disabled={loading}
             >
-              {loading ? "Submitting..." : "Submit"}
+              {loading ? "Submitting..." : "Create Account"}
             </button>
+          </div>
+
+          {/* Sign In Link */}
+          <div className="text-center mt-4">
+            <Link
+              href="/signin"
+              className="text-sm text-indigo-400 hover:text-indigo-300"
+            >
+              Already have an account?{" "}
+              <span className="underline">Sign In</span>
+            </Link>
           </div>
 
           {/* Success/Error Message */}

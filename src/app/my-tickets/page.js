@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function MyTicketsPage() {
+  const router = useRouter();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -25,7 +27,7 @@ export default function MyTicketsPage() {
       setEmail(user.email);
       fetchTickets(user.email);
     } else {
-      // Not logged in - redirect to login
+      // Not logged in - show sign in prompt
       setLoading(false);
     }
   };
@@ -71,31 +73,38 @@ export default function MyTicketsPage() {
     );
   }
 
+  // Show sign in/sign up prompt if not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+        <div className="max-w-md w-full bg-gray-900 rounded-lg p-8 border border-purple-700 text-center">
+          <h1 className="text-3xl font-bold mb-4">My Tickets</h1>
+          <p className="text-gray-400 mb-8">
+            Please sign in or create an account to view your tickets. Tickets purchased with your email will appear here.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/signin"
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/signup"
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
+            >
+              Create Account
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white py-20 px-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">My Tickets</h1>
-
-        {!user && (
-          <div className="bg-gray-900 rounded-lg p-8 mb-8 text-center border border-purple-700">
-            <h2 className="text-2xl font-semibold mb-4">Login Required</h2>
-            <p className="text-gray-400 mb-6">
-              Please log in to view your purchased tickets.
-            </p>
-            <Link
-              href="/login"
-              className="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
-            >
-              Log In
-            </Link>
-            <p className="text-sm text-gray-500 mt-4">
-              Don't have an account?{" "}
-              <Link href="/signup" className="text-purple-400 hover:underline">
-                Sign up
-              </Link>
-            </p>
-          </div>
-        )}
 
         {error && (
           <div className="bg-red-900 bg-opacity-30 border border-red-700 rounded-lg p-4 mb-6">

@@ -11,10 +11,12 @@ import Visualizer2 from "@/components/Visualizer2";
 
 export const metadata = {
   title: "Cicada Music Society | Home",
-  description: "Welcome to Cicada Music Society. Discover upcoming events, join our community, and experience the best in music.",
+  description:
+    "Welcome to Cicada Music Society. Discover upcoming events, join our community, and experience the best in music.",
   openGraph: {
     title: "Cicada Music Society | Home",
-    description: "Welcome to Cicada Music Society. Discover upcoming events, join our community, and experience the best in music.",
+    description:
+      "Welcome to Cicada Music Society. Discover upcoming events, join our community, and experience the best in music.",
   },
 };
 

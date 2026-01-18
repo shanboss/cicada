@@ -38,17 +38,10 @@ const About = () => {
             About Us
           </h2>
           <p className="mt-8 text-pretty text-lg font-medium text-gray-400 sm:text-xl/8">
-            Cicada is a student-led electronic music society focused on DJing,
-            music production, and live performances. We host events, workshops,
-            and jam sessions for enthusiasts and beginners alike.
+            CICADA is a community built on the love of music. We host
+            events throughout the year at various locations looking to create a
+            space for people to be themselves.
           </p>
-          <a
-            href="https://discord.gg/jyYtWNr9"
-            className="mt-8 inline-flex items-center gap-x-2 justify-center hover:text-indigo-400"
-          >
-            Join our Discord!{" "}
-            <FontAwesomeIcon icon={faDiscord} className="w-8 h-auto" />
-          </a>
         </div>
       </div>
     </section>
