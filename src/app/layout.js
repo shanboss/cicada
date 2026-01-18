@@ -21,18 +21,45 @@ export default function RootLayout({ children }) {
   const [user, setUser] = useState(null);
   useEffect(() => {
     const getSession = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+      try {
+        // Use getSession instead of getUser - it doesn't throw errors
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+        
+        if (error) {
+          // Handle AuthSessionMissingError gracefully
+          if (error.message?.includes("session") || error.message?.includes("Auth session missing")) {
+            console.log("[Layout] No active session");
+            setUser(null);
+          } else {
+            console.error("[Layout] Error getting session:", error);
+            setUser(null);
+          }
+        } else {
+          setUser(session?.user ?? null);
+        }
+      } catch (err) {
+        console.error("[Layout] Unexpected error getting session:", err);
+        setUser(null);
+      }
     };
 
     getSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      
+      // Handle token refresh errors
+      if (_event === 'TOKEN_REFRESHED') {
+        console.log("[Layout] Token refreshed successfully");
+      } else if (_event === 'SIGNED_OUT') {
+        console.log("[Layout] User signed out");
+        setUser(null);
+      }
     });
 
     return () => {
