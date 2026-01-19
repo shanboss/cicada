@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 export async function generateMetadata({ params }) {
-  const { eventId } = params;
+  const { eventId } = await params;
   
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
