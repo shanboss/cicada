@@ -100,7 +100,7 @@ export default function RegisterForm() {
             last_name: lastName,
             phone_number: phone_number || null,
           },
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
