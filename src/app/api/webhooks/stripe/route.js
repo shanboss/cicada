@@ -78,59 +78,14 @@ export async function POST(request) {
       break;
 
     case "payment_intent.succeeded":
-      const paymentIntent = event.data.object;
-      console.log("💳 Payment intent succeeded:", paymentIntent.id);
-      // Try to find the checkout session from the payment intent
-      if (paymentIntent.metadata?.checkout_session_id) {
-        console.log("🔍 Found checkout session ID in payment intent metadata");
-        try {
-          const session = await stripe.checkout.sessions.retrieve(
-            paymentIntent.metadata.checkout_session_id
-          );
-          if (session.payment_status === 'paid' && session.status === 'complete') {
-            await handleCheckoutSessionCompleted(session);
-          }
-        } catch (err) {
-          console.error("Error retrieving session from payment intent:", err);
-        }
-      }
+      // Skip - checkout.session.completed will handle this
+      console.log("💳 Payment intent succeeded (skipped - handled by checkout.session.completed)");
       break;
 
     case "charge.updated":
     case "charge.succeeded":
-      const charge = event.data.object;
-      console.log("💳 Charge event received:", event.type);
-      console.log("📋 Charge ID:", charge.id);
-      console.log("💵 Payment Intent ID:", charge.payment_intent);
-      
-      // Try to find checkout sessions with this payment intent
-      if (charge.payment_intent) {
-        try {
-          console.log("🔍 Searching for checkout sessions with payment intent:", charge.payment_intent);
-          const sessions = await stripe.checkout.sessions.list({
-            payment_intent: charge.payment_intent,
-            limit: 1,
-          });
-          
-          if (sessions.data && sessions.data.length > 0) {
-            const session = sessions.data[0];
-            console.log("✅ Found checkout session:", session.id);
-            console.log("💰 Payment Status:", session.payment_status);
-            console.log("📦 Session Status:", session.status);
-            
-            if (session.payment_status === 'paid' && session.status === 'complete') {
-              console.log("🎫 Processing checkout session from charge event");
-              await handleCheckoutSessionCompleted(session);
-            } else {
-              console.log("⚠️ Session not ready yet. Payment status:", session.payment_status);
-            }
-          } else {
-            console.log("⚠️ No checkout session found for payment intent:", charge.payment_intent);
-          }
-        } catch (err) {
-          console.error("❌ Error finding checkout session from charge:", err);
-        }
-      }
+      // Skip - checkout.session.completed will handle this
+      console.log("💳 Charge event received (skipped - handled by checkout.session.completed)");
       break;
 
     default:
@@ -149,6 +104,7 @@ async function handleCheckoutSessionCompleted(session) {
     console.log("📊 Full session object:", JSON.stringify(session, null, 2));
 
     // Check if tickets already exist for this session (idempotency)
+    // Use a more robust check by counting existing tickets
     const { data: existingTickets, error: checkError } = await supabaseAdmin
       .from("tickets")
       .select("id, ticket_number, qr_code_data")
@@ -164,7 +120,7 @@ async function handleCheckoutSessionCompleted(session) {
     // If tickets already exist, skip creation (webhook was already processed)
     if (existingTickets && existingTickets.length > 0) {
       console.log(
-        `Tickets already exist for session ${session.id}. Skipping creation.`
+        `⚠️ Tickets already exist for session ${session.id} (${existingTickets.length} tickets). Skipping creation to prevent duplicates.`
       );
       return;
     }
@@ -172,7 +128,21 @@ async function handleCheckoutSessionCompleted(session) {
     // Extract customer information
     const customerEmail = session.customer_details?.email;
     const customerName = session.customer_details?.name;
-    const quantity = parseInt(session.metadata?.quantity || "1");
+    
+    // Get quantity from metadata first, then fallback to line_items
+    let quantity = parseInt(session.metadata?.quantity || "1");
+    
+    // Fallback: Get quantity from line_items if metadata is missing
+    if (!session.metadata?.quantity && session.line_items?.data) {
+      // If we have line_items, sum up the quantities
+      quantity = session.line_items.data.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      console.log(`📦 Quantity from line_items: ${quantity}`);
+    } else if (!session.metadata?.quantity && session.line_items) {
+      // If line_items is an expandable object, we might need to expand it
+      // For now, default to 1 if we can't determine
+      quantity = 1;
+      console.log("⚠️ Could not determine quantity, defaulting to 1");
+    }
 
     if (!customerEmail) {
       console.error("No customer email found in session");

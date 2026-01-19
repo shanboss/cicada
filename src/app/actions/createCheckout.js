@@ -67,6 +67,10 @@ export async function createStandardCheckout({ priceId, eventId, eventTitle, qua
         event_title: eventTitle,
         quantity: quantity.toString(),
       },
+      // Branding options (also configure in Stripe Dashboard > Settings > Branding)
+      payment_method_types: ["card"],
+      billing_address_collection: "auto",
+      customer_email: undefined, // Let customer provide email
     });
 
     return session.url;
