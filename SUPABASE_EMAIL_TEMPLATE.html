@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm your signup - Cicada Music Society</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #171717;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #171717; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #262626; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #6366f1 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold; letter-spacing: 2px;">
+                                CICADA
+                            </h1>
+                            <p style="margin: 10px 0 0 0; color: #e5e7eb; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                                Music Society
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 style="margin: 0 0 20px 0; color: #ffffff; font-size: 24px; font-weight: bold;">
+                                Confirm your signup
+                            </h2>
+                            <p style="margin: 0 0 20px 0; color: #d1d5db; font-size: 16px; line-height: 1.6;">
+                                Welcome to Cicada Music Society! We're excited to have you join our community.
+                            </p>
+                            <p style="margin: 0 0 30px 0; color: #d1d5db; font-size: 16px; line-height: 1.6;">
+                                Please click the button below to confirm your email address and activate your account:
+                            </p>
+                            
+                            <!-- CTA Button -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td align="center" style="padding: 0 0 30px 0;">
+                                        <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 32px; background-color: #6366f1; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; text-align: center; transition: background-color 0.3s;">
+                                            Confirm your email
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Alternative Link -->
+                            <p style="margin: 0 0 30px 0; color: #9ca3af; font-size: 14px; line-height: 1.6; text-align: center;">
+                                Or copy and paste this link into your browser:<br>
+                                <a href="{{ .ConfirmationURL }}" style="color: #818cf8; text-decoration: underline; word-break: break-all;">{{ .ConfirmationURL }}</a>
+                            </p>
+                            
+                            <!-- Info Box -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1f2937; border-left: 4px solid #6366f1; border-radius: 4px; margin: 20px 0;">
+                                <tr>
+                                    <td style="padding: 15px 20px;">
+                                        <p style="margin: 0; color: #d1d5db; font-size: 14px; line-height: 1.6;">
+                                            <strong style="color: #ffffff;">Note:</strong> This confirmation link will expire in 24 hours. If you didn't create an account with Cicada Music Society, you can safely ignore this email.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1f2937; padding: 30px; text-align: center; border-top: 1px solid #374151;">
+                            <p style="margin: 0 0 10px 0; color: #9ca3af; font-size: 12px;">
+                                © 2024 Cicada Music Society. All rights reserved.
+                            </p>
+                            <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                                <a href="https://www.instagram.com/cicada.dtx/" style="color: #818cf8; text-decoration: none;">Follow us on Instagram</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <!-- Bottom Spacing -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                        <td style="padding: 20px 0; text-align: center;">
+                            <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                                This is an automated email. Please do not reply.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+
