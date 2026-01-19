@@ -60,7 +60,7 @@ export async function createStandardCheckout({ priceId, eventId, eventTitle, qua
         },
       ],
       mode: "payment",
-      success_url: `${origin}/return?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/events`,
       metadata: {
         event_id: eventId,

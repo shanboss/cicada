@@ -12,8 +12,26 @@ const supabaseAdmin = createClient(
 );
 
 export async function POST(request) {
+  console.log("🔔 Webhook received!");
+  
   const body = await request.text();
   const signature = (await headers()).get("stripe-signature");
+
+  if (!signature) {
+    console.error("❌ No stripe-signature header found");
+    return NextResponse.json(
+      { error: "No signature header" },
+      { status: 400 }
+    );
+  }
+
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error("❌ STRIPE_WEBHOOK_SECRET is not set in environment variables");
+    return NextResponse.json(
+      { error: "Webhook secret not configured" },
+      { status: 500 }
+    );
+  }
 
   let event;
 
@@ -24,8 +42,9 @@ export async function POST(request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+    console.log("✅ Webhook signature verified. Event type:", event.type);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err.message);
+    console.error("❌ Webhook signature verification failed:", err.message);
     return NextResponse.json(
       { error: `Webhook Error: ${err.message}` },
       { status: 400 }
@@ -35,25 +54,99 @@ export async function POST(request) {
   // Handle the event
   switch (event.type) {
     case "checkout.session.completed":
+      console.log("🎫 Processing checkout.session.completed event");
       const session = event.data.object;
-      await handleCheckoutSessionCompleted(session);
+      console.log("📋 Session ID:", session.id);
+      console.log("📧 Customer Email:", session.customer_details?.email);
+      console.log("💰 Payment Status:", session.payment_status);
+      console.log("📦 Session Status:", session.status);
+      
+      // Only process if payment is actually completed
+      if (session.payment_status === 'paid' && session.status === 'complete') {
+        await handleCheckoutSessionCompleted(session);
+      } else {
+        console.log("⚠️ Session not fully paid yet. Payment status:", session.payment_status, "Session status:", session.status);
+      }
+      break;
+
+    case "checkout.session.async_payment_succeeded":
+      console.log("🎫 Processing checkout.session.async_payment_succeeded event");
+      const asyncSession = event.data.object;
+      console.log("📋 Session ID:", asyncSession.id);
+      console.log("📧 Customer Email:", asyncSession.customer_details?.email);
+      await handleCheckoutSessionCompleted(asyncSession);
       break;
 
     case "payment_intent.succeeded":
       const paymentIntent = event.data.object;
-      console.log("Payment intent succeeded:", paymentIntent.id);
+      console.log("💳 Payment intent succeeded:", paymentIntent.id);
+      // Try to find the checkout session from the payment intent
+      if (paymentIntent.metadata?.checkout_session_id) {
+        console.log("🔍 Found checkout session ID in payment intent metadata");
+        try {
+          const session = await stripe.checkout.sessions.retrieve(
+            paymentIntent.metadata.checkout_session_id
+          );
+          if (session.payment_status === 'paid' && session.status === 'complete') {
+            await handleCheckoutSessionCompleted(session);
+          }
+        } catch (err) {
+          console.error("Error retrieving session from payment intent:", err);
+        }
+      }
+      break;
+
+    case "charge.updated":
+    case "charge.succeeded":
+      const charge = event.data.object;
+      console.log("💳 Charge event received:", event.type);
+      console.log("📋 Charge ID:", charge.id);
+      console.log("💵 Payment Intent ID:", charge.payment_intent);
+      
+      // Try to find checkout sessions with this payment intent
+      if (charge.payment_intent) {
+        try {
+          console.log("🔍 Searching for checkout sessions with payment intent:", charge.payment_intent);
+          const sessions = await stripe.checkout.sessions.list({
+            payment_intent: charge.payment_intent,
+            limit: 1,
+          });
+          
+          if (sessions.data && sessions.data.length > 0) {
+            const session = sessions.data[0];
+            console.log("✅ Found checkout session:", session.id);
+            console.log("💰 Payment Status:", session.payment_status);
+            console.log("📦 Session Status:", session.status);
+            
+            if (session.payment_status === 'paid' && session.status === 'complete') {
+              console.log("🎫 Processing checkout session from charge event");
+              await handleCheckoutSessionCompleted(session);
+            } else {
+              console.log("⚠️ Session not ready yet. Payment status:", session.payment_status);
+            }
+          } else {
+            console.log("⚠️ No checkout session found for payment intent:", charge.payment_intent);
+          }
+        } catch (err) {
+          console.error("❌ Error finding checkout session from charge:", err);
+        }
+      }
       break;
 
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      console.log(`⚠️ Unhandled event type: ${event.type}`);
+      // Log the full event for debugging
+      console.log("📄 Event data:", JSON.stringify(event.data.object, null, 2));
   }
 
+  console.log("✅ Webhook processed successfully");
   return NextResponse.json({ received: true });
 }
 
 async function handleCheckoutSessionCompleted(session) {
   try {
-    console.log("Processing checkout session:", session.id);
+    console.log("🚀 Starting ticket creation process for session:", session.id);
+    console.log("📊 Full session object:", JSON.stringify(session, null, 2));
 
     // Check if tickets already exist for this session (idempotency)
     const { data: existingTickets, error: checkError } = await supabaseAdmin
@@ -62,7 +155,10 @@ async function handleCheckoutSessionCompleted(session) {
       .eq("stripe_session_id", session.id);
 
     if (checkError) {
-      console.error("Error checking existing tickets:", checkError);
+      console.error("❌ Error checking existing tickets:", checkError);
+      console.error("Error details:", JSON.stringify(checkError, null, 2));
+    } else {
+      console.log("✅ Checked for existing tickets. Found:", existingTickets?.length || 0);
     }
 
     // If tickets already exist, skip creation (webhook was already processed)
@@ -145,11 +241,15 @@ async function handleCheckoutSessionCompleted(session) {
       .select();
 
     if (ticketError) {
-      console.error("Error creating tickets:", ticketError);
-      return;
+      console.error("❌ Error creating tickets:", ticketError);
+      console.error("Error details:", JSON.stringify(ticketError, null, 2));
+      console.error("Tickets that failed to create:", JSON.stringify(ticketsToCreate, null, 2));
+      throw ticketError; // Throw to be caught by outer try-catch
     }
 
-    console.log(`${tickets.length} ticket(s) created`);
+    console.log(`✅ Successfully created ${tickets.length} ticket(s)`);
+    console.log("🎫 Ticket IDs:", tickets.map(t => t.id));
+    console.log("🎫 Ticket Numbers:", tickets.map(t => t.ticket_number));
 
     // Send ONE email with all QR codes
     try {
@@ -181,4 +281,8 @@ async function handleCheckoutSessionCompleted(session) {
 
 // Disable body parsing, since we need the raw body for signature verification
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+// Next.js will by default parse the body, but we need the raw body for Stripe webhook verification
+// Using request.text() handles this correctly
 
