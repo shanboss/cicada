@@ -45,12 +45,12 @@ const Events = () => {
   today.setHours(0, 0, 0, 0); // Reset time to beginning of day
 
   const upcomingEvents = events.filter((event) => {
-    const eventDate = new Date(event.date);
+    const eventDate = new Date(event.date + "T00:00:00");
     return eventDate >= today;
   });
 
   const pastEvents = events.filter((event) => {
-    const eventDate = new Date(event.date);
+    const eventDate = new Date(event.date + "T00:00:00");
     return eventDate < today;
   });
 

@@ -91,7 +91,7 @@ export default function CheckoutPage() {
   const total = subtotal + tax;
 
   return (
-    <div className="min-h-screen bg-black text-white mt-20 px-4">
+    <div className="min-h-screen bg-black text-white px-4 py-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -127,7 +127,7 @@ export default function CheckoutPage() {
                 <div>
                   <p className="font-semibold">Date</p>
                   <p>
-                    {new Date(event.date).toLocaleDateString("en-US", {
+                    {new Date(event.date + "T00:00:00").toLocaleDateString("en-US", {
                       weekday: "long",
                       year: "numeric",
                       month: "long",

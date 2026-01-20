@@ -204,14 +204,12 @@ export default function AdminDashboard() {
   today.setHours(0, 0, 0, 0); // Reset time to beginning of day
 
   const currentEvents = events.filter((event) => {
-    const eventDate = new Date(event.date);
-    eventDate.setHours(0, 0, 0, 0);
+    const eventDate = new Date(event.date + "T00:00:00");
     return eventDate >= today;
   });
 
   const expiredEvents = events.filter((event) => {
-    const eventDate = new Date(event.date);
-    eventDate.setHours(0, 0, 0, 0);
+    const eventDate = new Date(event.date + "T00:00:00");
     return eventDate < today;
   });
 
@@ -332,7 +330,7 @@ export default function AdminDashboard() {
                         {event.event_title}
                       </h3>
                       <p className="text-sm text-neutral-500 mt-1">
-                        {new Date(event.date).toLocaleDateString()}
+                        {new Date(event.date + "T00:00:00").toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex flex-row">
@@ -370,7 +368,7 @@ export default function AdminDashboard() {
                         {event.event_title}
                       </h3>
                       <p className="text-sm text-neutral-500 mt-1">
-                        {new Date(event.date).toLocaleDateString()}
+                        {new Date(event.date + "T00:00:00").toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex flex-row">

@@ -71,7 +71,7 @@ const EventCarousel = () => {
                       {event.desc}
                     </p>
                     <p className="text-neutral-300 mt-2 text-xl">
-                      {new Date(event.date).toLocaleDateString()} |{" "}
+                      {new Date(event.date + "T00:00:00").toLocaleDateString()} |{" "}
                       {new Date(`1970-01-01T${event.time}`).toLocaleTimeString(
                         [],
                         {

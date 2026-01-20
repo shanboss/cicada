@@ -134,9 +134,9 @@ function SuccessPageContent() {
             </p>
             
             {sessionData?.customer_email && (
-              <div className="bg-black rounded-lg p-4 mb-6">
+              <div className="bg-black rounded-lg p-4 mb-6 overflow-hidden">
                 <p className="text-sm text-gray-400 mb-1">Confirmation sent to:</p>
-                <p className="text-white font-semibold">{sessionData.customer_email}</p>
+                <p className="text-white font-semibold break-all">{sessionData.customer_email}</p>
               </div>
             )}
 
