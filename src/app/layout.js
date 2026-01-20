@@ -70,9 +70,9 @@ export default function RootLayout({ children }) {
   }, []);
   return (
     <html lang="en">
-      <body className={"font-monument antialiased pt-20"}>
+      <body className={"font-monument antialiased pt-32"}>
         <Navbar />
-        <div className="my-10">{children}</div>
+        <main>{children}</main>
         <Footer />
       </body>
     </html>
