@@ -57,7 +57,7 @@ const Events = () => {
   return (
     <section
       id="events"
-      className="relative px-6 py-10 text-white overflow-hidden"
+      className="relative py-10 text-white overflow-hidden"
     >
       {/* Animated Gradient Background */}
       <div className="absolute inset-0 animated-gradient opacity-80"></div>
