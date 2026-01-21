@@ -186,7 +186,7 @@ const Navbar = () => {
         <Link href="/" className="flex flex-row items-center justify-center">
           {/* Logo */}
           <Image
-            src="/CicadaLogo.png"
+            src="/newLogo.png"
             alt="Cicada Logo"
             width={100}
             height={100}

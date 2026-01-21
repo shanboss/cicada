@@ -18,13 +18,10 @@ export const metadata = {
 };
 
 export default function Home() {
-  const imagesArray = ["/gallery/img2.HEIC", "/gallery/img1.jpg"];
-
   return (
     <div className="bg-black text-white">
       <Events />
 
-      <Membership />
     </div>
   );
 }
