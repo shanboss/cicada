@@ -14,25 +14,28 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        // Get current user
-        const {
-          data: { user: currentUser },
-          error: userError,
-        } = await supabase.auth.getUser();
+        setLoading(true);
+        setError(null);
 
-        if (userError || !currentUser) {
+        // Use getSession first (more reliable, doesn't throw errors)
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError || !session?.user) {
           // Redirect to home if not signed in
           router.push("/");
           return;
         }
 
-        setUser(currentUser);
+        setUser(session.user);
 
         // Fetch profile from profiles table
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", currentUser.id)
+          .eq("id", session.user.id)
           .single();
 
         if (profileError) {
@@ -50,7 +53,7 @@ export default function ProfilePage() {
     };
 
     fetchUserProfile();
-  }, []);
+  }, [router]);
 
   // Don't render if user is not signed in (redirecting)
   if (!user && !loading) {

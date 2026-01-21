@@ -16,17 +16,26 @@ const Events = () => {
     router.push(link);
   };
   const fetchEvents = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .order("date", { ascending: false });
-    if (error) {
-      console.error("Error fetching events:", error);
-    } else {
-      setEvents(data);
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching events:", error);
+        // Set empty array on error to prevent rendering issues
+        setEvents([]);
+      } else {
+        setEvents(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching events:", err);
+      setEvents([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Fetch events on page load
@@ -66,7 +75,7 @@ const Events = () => {
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
 
       {/* Content with relative positioning */}
-      <div className="relative z-10">
+      <div className="relative z-10 px-4 sm:px-6 lg:px-8">
         {/* Upcoming Events Section */}
         <h2 className="text-4xl font-bold text-left max-w-5xl mx-auto">
           Upcoming Events
