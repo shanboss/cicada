@@ -308,6 +308,12 @@ export default function AdminDashboard() {
             >
               Verify Tickets
             </Link>
+            <Link
+              href="/admin/generate-qr"
+              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-semibold flex items-center gap-2"
+            >
+              Admin QR Code
+            </Link>
           </div>
 
           {/* ✅ Current Events List */}

@@ -15,19 +15,68 @@ export default function MyTicketsPage() {
 
   useEffect(() => {
     checkUser();
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("[MyTickets] Auth state changed:", _event);
+      
+      // Handle token refresh events - don't refetch unnecessarily
+      if (_event === "TOKEN_REFRESHED") {
+        console.log("[MyTickets] Token refreshed successfully");
+        return;
+      }
+      
+      if (_event === "SIGNED_OUT" || !session) {
+        setUser(null);
+        setEmail("");
+        setTickets([]);
+        setLoading(false);
+      } else if (session?.user) {
+        // User signed in or session updated
+        setUser(session.user);
+        setEmail(session.user.email);
+        await fetchTickets(session.user.email);
+      }
+    });
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const checkUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      setLoading(true);
+      setError(null);
 
-    if (user) {
-      setUser(user);
-      setEmail(user.email);
-      fetchTickets(user.email);
-    } else {
-      // Not logged in - show sign in prompt
+      // Use getSession first (more reliable, doesn't throw errors)
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error("Error getting session:", sessionError);
+        setLoading(false);
+        return;
+      }
+
+      if (session?.user) {
+        setUser(session.user);
+        setEmail(session.user.email);
+        await fetchTickets(session.user.email);
+      } else {
+        // Not logged in - show sign in prompt
+        setUser(null);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Error checking user:", err);
+      setError("Failed to check authentication status");
       setLoading(false);
     }
   };
@@ -36,6 +85,11 @@ export default function MyTicketsPage() {
     try {
       setLoading(true);
       setError(null);
+
+      if (!userEmail) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error: fetchError } = await supabase
         .from("tickets")
@@ -54,12 +108,15 @@ export default function MyTicketsPage() {
         .eq("customer_email", userEmail)
         .order("purchase_date", { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Error fetching tickets:", fetchError);
+        throw fetchError;
+      }
 
       setTickets(data || []);
     } catch (err) {
       console.error("Error fetching tickets:", err);
-      setError(err.message);
+      setError(err.message || "Failed to load tickets. Please try again.");
     } finally {
       setLoading(false);
     }
