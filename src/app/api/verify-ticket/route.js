@@ -91,7 +91,7 @@ export async function POST(request) {
   }
 }
 
-// Mark ticket as used
+// Mark ticket as used (ticketId is UUID string)
 export async function PUT(request) {
   try {
     const { ticketId } = await request.json();
@@ -110,7 +110,7 @@ export async function PUT(request) {
         used: true,
         used_date: new Date().toISOString(),
       })
-      .eq("id", ticketId)
+      .eq("id", String(ticketId))
       .select()
       .single();
 

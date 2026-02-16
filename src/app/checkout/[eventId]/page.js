@@ -59,7 +59,7 @@ export default function CheckoutPage() {
 
       const checkoutUrl = await createStandardCheckout({
         priceId: event.stripe_price_id,
-        eventId: event.id.toString(),
+        eventId: String(event.id), // event.id is UUID (string)
         eventTitle: event.event_title,
         quantity: quantity,
       });

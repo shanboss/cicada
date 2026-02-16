@@ -19,7 +19,7 @@ export async function GET(request) {
       );
     }
 
-    // Fetch tickets with event information
+    // Fetch tickets with event information (tickets.id and events.id are UUIDs)
     const { data: tickets, error } = await supabaseAdmin
       .from("tickets")
       .select(`

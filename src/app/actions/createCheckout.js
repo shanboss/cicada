@@ -24,9 +24,9 @@ export async function createCheckoutSession({ priceId, eventId, eventTitle }) {
       ],
       mode: "payment",
       return_url: `${origin}/return?session_id={CHECKOUT_SESSION_ID}`,
-      // Store event information in metadata
+      // Store event information in metadata (event_id is UUID string)
       metadata: {
-        event_id: eventId,
+        event_id: String(eventId),
         event_title: eventTitle,
       },
       // Enable customer email collection
@@ -63,7 +63,7 @@ export async function createStandardCheckout({ priceId, eventId, eventTitle, qua
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/events`,
       metadata: {
-        event_id: eventId,
+        event_id: String(eventId), // event_id is UUID string
         event_title: eventTitle,
         quantity: quantity.toString(),
       },

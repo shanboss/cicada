@@ -151,7 +151,7 @@ async function handleCheckoutSessionCompleted(session) {
 
     console.log(`Creating ${quantity} ticket(s) for ${customerEmail}`);
 
-    // Get event ID from session metadata
+    // Get event ID from session metadata (event_id is UUID string)
     const eventId = session.metadata?.event_id;
     
     let event = null;
