@@ -193,6 +193,18 @@ export default function AdminDashboard() {
     }
   };
 
+  // Dev-only auto-login with admin credentials from env vars
+  const handleDevLogin = async () => {
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+      password: process.env.NEXT_PUBLIC_ADMIN_PASSWORD,
+    });
+    if (error) {
+      setError(error.message);
+    }
+  };
+
   // ✅ Handle logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -296,6 +308,17 @@ export default function AdminDashboard() {
           >
             Login
           </button>
+
+          {/* Dev-only auto-login button */}
+          {process.env.NODE_ENV === "development" && (
+            <button
+              type="button"
+              onClick={handleDevLogin}
+              className="w-full mt-3 bg-yellow-600 hover:bg-yellow-500 text-white py-2 rounded"
+            >
+              Dev Login
+            </button>
+          )}
         </form>
       ) : (
         <>

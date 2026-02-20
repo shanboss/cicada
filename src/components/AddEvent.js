@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import imageCompression from "browser-image-compression";
 import { supabase } from "../../lib/supabaseClient";
 
 export default function AddEvent({ onEventAdded }) {
@@ -45,16 +46,30 @@ export default function AddEvent({ onEventAdded }) {
 
     let image = "";
     if (file) {
+      // Compress the image before uploading
+      let compressedFile;
+      try {
+        compressedFile = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        });
+      } catch (compressionError) {
+        setMessage(`❌ Error compressing image: ${compressionError.message}`);
+        setLoading(false);
+        return;
+      }
+
       // Generate a unique filename
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
       // Include the "private" folder in the file path
       const filePath = `private/${fileName}`;
 
-      // Upload file to Supabase Storage bucket "images"
+      // Upload compressed file to Supabase Storage bucket "images"
       const { error: uploadError } = await supabase.storage
         .from("images")
-        .upload(filePath, file);
+        .upload(filePath, compressedFile);
 
       if (uploadError) {
         setMessage(`❌ Error uploading image: ${uploadError.message}`);
@@ -132,8 +147,8 @@ export default function AddEvent({ onEventAdded }) {
 
       {/* Modal */}
       {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-neutral-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-neutral-800 p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4 text-white">Create Event</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Title */}
