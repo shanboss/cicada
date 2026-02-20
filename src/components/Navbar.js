@@ -6,155 +6,21 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faInstagram } from "@fortawesome/free-brands-svg-icons";
 import PrimaryButton from "./Button";
 import Image from "next/image";
-import { supabase } from "../../lib/supabaseClient";
+import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [userInitial, setUserInitial] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, profile, isAdmin, signOut } = useAuth();
 
-  // Get user and listen to auth state changes
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        // Try getSession first (doesn't throw errors)
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          // If no session, try getUser as fallback
-          const {
-            data: { user },
-            error: userError,
-          } = await supabase.auth.getUser();
-          
-          if (userError) {
-            // Handle AuthSessionMissingError gracefully
-            if (userError.message?.includes("session") || userError.message?.includes("Auth session missing")) {
-              console.log("[Navbar] No active session, user not authenticated");
-              setUser(null);
-              setUserInitial("");
-              setIsAdmin(false);
-              return;
-            } else {
-              console.error("[Navbar] Error getting user:", userError);
-              setUser(null);
-              return;
-            }
-          }
-          
-          setUser(user);
-          if (user) {
-            await fetchUserProfile(user);
-          }
-        } else {
-          setUser(session.user);
-          if (session.user) {
-            await fetchUserProfile(session.user);
-          }
-        }
-      } catch (err) {
-        console.error("[Navbar] Unexpected error getting user:", err);
-        setUser(null);
-        setUserInitial("");
-        setIsAdmin(false);
-      }
-    };
-
-    const fetchUserProfile = async (user) => {
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("first_name, user_role")
-          .eq("id", user.id)
-          .single();
-        
-        // Set initial from profile first, then fallback to user_metadata
-        if (profile?.first_name) {
-          setUserInitial(profile.first_name.charAt(0).toUpperCase());
-        } else if (user?.user_metadata?.first_name) {
-          setUserInitial(user.user_metadata.first_name.charAt(0).toUpperCase());
-        } else {
-          setUserInitial(user?.email?.charAt(0).toUpperCase() || "U");
-        }
-        
-        setIsAdmin(
-          profile?.user_role === "admin" || user.user_metadata?.role === "admin"
-        );
-      } catch (err) {
-        console.error("[Navbar] Error fetching profile:", err);
-      }
-    };
-
-    getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("[Navbar] Auth state changed:", _event);
-      
-      // Handle token refresh events
-      if (_event === 'TOKEN_REFRESHED') {
-        console.log("[Navbar] Token refreshed successfully");
-        // Session is still valid, no need to update
-        return;
-      } else if (_event === 'SIGNED_OUT') {
-        console.log("[Navbar] User signed out");
-        setUser(null);
-        setUserInitial("");
-        setIsAdmin(false);
-        return;
-      }
-      
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Fetch profile to get first name and role
-        try {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("first_name, user_role")
-            .eq("id", session.user.id)
-            .single();
-          
-          // Set initial from profile first, then fallback to user_metadata
-          if (profile?.first_name) {
-            setUserInitial(profile.first_name.charAt(0).toUpperCase());
-          } else if (session.user?.user_metadata?.first_name) {
-            setUserInitial(
-              session.user.user_metadata.first_name.charAt(0).toUpperCase()
-            );
-          } else {
-            setUserInitial(session.user?.email?.charAt(0).toUpperCase() || "U");
-          }
-          
-          setIsAdmin(
-            profile?.user_role === "admin" ||
-              session.user.user_metadata?.role === "admin"
-          );
-        } catch (err) {
-          console.error("[Navbar] Error fetching profile in auth change:", err);
-        }
-      } else {
-        setUserInitial("");
-        setIsAdmin(false);
-      }
-    });
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
-  }, []);
+  // Derive user initial from profile or user metadata
+  const userInitial = profile?.first_name
+    ? profile.first_name.charAt(0).toUpperCase()
+    : user?.user_metadata?.first_name
+    ? user.user_metadata.first_name.charAt(0).toUpperCase()
+    : user?.email?.charAt(0).toUpperCase() || "U";
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setUserInitial("");
+    await signOut();
   };
 
   // Close menu when clicking outside

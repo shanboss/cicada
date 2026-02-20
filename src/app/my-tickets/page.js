@@ -2,84 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function MyTicketsPage() {
-  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [email, setEmail] = useState("");
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    checkUser();
+    if (authLoading) return;
 
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("[MyTickets] Auth state changed:", _event);
-      
-      // Handle token refresh events - don't refetch unnecessarily
-      if (_event === "TOKEN_REFRESHED") {
-        console.log("[MyTickets] Token refreshed successfully");
-        return;
-      }
-      
-      if (_event === "SIGNED_OUT" || !session) {
-        setUser(null);
-        setEmail("");
-        setTickets([]);
-        setLoading(false);
-      } else if (session?.user) {
-        // User signed in or session updated
-        setUser(session.user);
-        setEmail(session.user.email);
-        await fetchTickets(session.user.email);
-      }
-    });
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
-  }, []);
-
-  const checkUser = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Use getSession first (more reliable, doesn't throw errors)
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error("Error getting session:", sessionError);
-        setLoading(false);
-        return;
-      }
-
-      if (session?.user) {
-        setUser(session.user);
-        setEmail(session.user.email);
-        await fetchTickets(session.user.email);
-      } else {
-        // Not logged in - show sign in prompt
-        setUser(null);
-        setLoading(false);
-      }
-    } catch (err) {
-      console.error("Error checking user:", err);
-      setError("Failed to check authentication status");
+    if (!user) {
       setLoading(false);
+      return;
     }
-  };
+
+    fetchTickets(user.email);
+  }, [user, authLoading]);
 
   const fetchTickets = async (userEmail) => {
     try {
@@ -122,7 +63,7 @@ export default function MyTicketsPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500"></div>
@@ -170,11 +111,11 @@ export default function MyTicketsPage() {
           </div>
         )}
 
-        {tickets.length === 0 && !loading && email && (
+        {tickets.length === 0 && !loading && user?.email && (
           <div className="text-center py-12">
             <h2 className="text-2xl font-semibold mb-2">No Tickets Found</h2>
             <p className="text-gray-400 mb-6">
-              No tickets found for {email}. Check your email address or browse
+              No tickets found for {user.email}. Check your email address or browse
               upcoming events.
             </p>
             <Link

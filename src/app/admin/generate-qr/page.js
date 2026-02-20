@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { supabase } from "../../../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AdminGenerateQRPage() {
   const [email, setEmail] = useState("");
@@ -12,49 +12,17 @@ export default function AdminGenerateQRPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [ticketData, setTicketData] = useState(null);
-  const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // Check if user is admin
+  // Redirect non-admin users once auth has loaded
   React.useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session) {
-          router.push("/admin");
-          return;
-        }
-
-        setUser(session.user);
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("user_role")
-          .eq("id", session.user.id)
-          .single();
-
-        const isUserAdmin = 
-          (profile && profile.user_role === "admin") ||
-          session.user.user_metadata?.role === "admin";
-
-        setIsAdmin(isUserAdmin);
-
-        if (!isUserAdmin) {
-          router.push("/admin");
-        }
-      } catch (err) {
-        console.error("Error checking admin:", err);
-        router.push("/admin");
-      }
-    };
-
-    checkAdmin();
-  }, [router]);
+    if (authLoading) return;
+    if (!user || !isAdmin) {
+      router.push("/admin");
+    }
+  }, [user, isAdmin, authLoading, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,7 +60,7 @@ export default function AdminGenerateQRPage() {
     }
   };
 
-  if (!isAdmin) {
+  if (authLoading || !isAdmin) {
     return (
       <div className="flex min-h-screen flex-col mt-12 items-center px-6 py-12 bg-neutral-900 text-neutral-300">
         <p>Loading...</p>

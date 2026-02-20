@@ -4,10 +4,10 @@ import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { supabase } from "../../../lib/supabaseClient";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function VerifyTicketPage() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
   const [scanning, setScanning] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
   const [manualEntry, setManualEntry] = useState("");
@@ -17,24 +17,6 @@ export default function VerifyTicketPage() {
   const [cameraError, setCameraError] = useState(null);
   const [currentScanStatus, setCurrentScanStatus] = useState(null); // 'valid', 'used', or null
   const scannerRef = useRef(null);
-
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  const checkUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    setUser(user);
-    setLoading(false);
-  };
 
   const startScanner = () => {
     setScanning(true);
@@ -375,7 +357,7 @@ export default function VerifyTicketPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500"></div>

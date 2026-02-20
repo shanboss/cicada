@@ -6,141 +6,18 @@ import EditEvent from "@/components/EditEvent";
 import { supabase } from "../../../lib/supabaseClient";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AdminDashboard() {
-  const [events, setEvents] = useState([]); // State to store events
-  const [loading, setLoading] = useState(true); // State for loading status
+  const { user, isAdmin, loading: authLoading, signOut } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editingEvent, setEditingEvent] = useState(null);
-  const [email, setEmail] = useState(""); // State for email input
-  const [password, setPassword] = useState(""); // State for password input
-  const [error, setError] = useState(""); // State for error message
-  const [user, setUser] = useState(null); // State to store user info
-  const [userProfile, setUserProfile] = useState(null); // State to store user profile with role
-  const [isAdmin, setIsAdmin] = useState(false); // State to track if user is admin
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  // ✅ Listen to auth state changes and check admin role
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        // Try getSession first (doesn't throw errors)
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          // If no session, try getUser as fallback
-          const {
-            data: { user },
-            error: userError,
-          } = await supabase.auth.getUser();
-          
-          if (userError) {
-            // Handle AuthSessionMissingError gracefully
-            if (userError.message?.includes("session") || userError.message?.includes("Auth session missing")) {
-              console.log("[AdminPage] No active session, user not authenticated");
-              setUser(null);
-              setIsAdmin(false);
-              return;
-            } else {
-              console.error("[AdminPage] Error getting user:", userError);
-              setUser(null);
-              setIsAdmin(false);
-              return;
-            }
-          }
-          
-          setUser(user);
-          if (user) {
-            await checkAdminRole(user);
-          } else {
-            setIsAdmin(false);
-          }
-        } else {
-          setUser(session.user);
-          if (session.user) {
-            await checkAdminRole(session.user);
-          } else {
-            setIsAdmin(false);
-          }
-        }
-      } catch (err) {
-        console.error("[AdminPage] Unexpected error getting user:", err);
-        setUser(null);
-        setIsAdmin(false);
-      }
-    };
-
-    const checkAdminRole = async (user) => {
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("user_role")
-          .eq("id", user.id)
-          .single();
-
-        if (!profileError && profile) {
-          setUserProfile(profile);
-          setIsAdmin(profile.user_role === "admin");
-        } else {
-          // Fallback: check user_metadata for role
-          setIsAdmin(user.user_metadata?.role === "admin");
-        }
-      } catch (err) {
-        console.error("[AdminPage] Error checking admin role:", err);
-        setIsAdmin(false);
-      }
-    };
-
-    getUser();
-
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log("[AdminPage] Auth state changed:", _event);
-        
-        // Handle token refresh events
-        if (_event === 'TOKEN_REFRESHED') {
-          console.log("[AdminPage] Token refreshed successfully");
-          return;
-        } else if (_event === 'SIGNED_OUT') {
-          console.log("[AdminPage] User signed out");
-          setUser(null);
-          setIsAdmin(false);
-          return;
-        }
-        
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          // Fetch user profile to check role
-          try {
-            const { data: profile, error: profileError } = await supabase
-              .from("profiles")
-              .select("user_role")
-              .eq("id", session.user.id)
-              .single();
-
-            if (!profileError && profile) {
-              setUserProfile(profile);
-              setIsAdmin(profile.user_role === "admin");
-            } else {
-              // Fallback: check user_metadata for role
-              setIsAdmin(session.user.user_metadata?.role === "admin");
-            }
-          } catch (err) {
-            console.error("[AdminPage] Error fetching profile in auth change:", err);
-            setIsAdmin(false);
-          }
-        } else {
-          setIsAdmin(false);
-        }
-      }
-    );
-
-    return () => subscription?.subscription.unsubscribe();
-  }, []);
-
-  // ✅ Fetch events from Supabase
+  // Fetch events from Supabase
   const fetchEvents = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -157,10 +34,10 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    if (user) fetchEvents(); // ✅ Fetch events only if the user is logged in
+    if (user) fetchEvents();
   }, [user]);
 
-  // ✅ Handle event deletion
+  // Handle event deletion
   const handleDelete = async (eventId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this event?"
@@ -178,7 +55,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // ✅ Handle login
+  // Handle login
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
@@ -205,15 +82,14 @@ export default function AdminDashboard() {
     }
   };
 
-  // ✅ Handle logout
+  // Handle logout
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    await signOut();
   };
 
-  // ✅ Separate events into current and expired
+  // Separate events into current and expired
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to beginning of day
+  today.setHours(0, 0, 0, 0);
 
   const currentEvents = events.filter((event) => {
     const eventDate = new Date(event.date + "T00:00:00");
@@ -224,6 +100,14 @@ export default function AdminDashboard() {
     const eventDate = new Date(event.date + "T00:00:00");
     return eventDate < today;
   });
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen flex-col mt-12 items-center justify-center px-6 py-12 bg-neutral-900 text-neutral-300">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col mt-12 items-center px-6 py-12 bg-neutral-900 text-neutral-300">
@@ -237,7 +121,7 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* ✅ Show access denied if not admin */}
+      {/* Show access denied if not admin */}
       {user && !isAdmin ? (
         <div className="mt-6 w-full max-w-2xl bg-red-900/20 border border-red-500 p-6 rounded-lg">
           <h2 className="text-2xl font-semibold mb-4 text-red-400">
@@ -322,7 +206,7 @@ export default function AdminDashboard() {
         </form>
       ) : (
         <>
-          {/* ✅ Admin Actions */}
+          {/* Admin Actions */}
           <div className="mt-6 w-full max-w-2xl flex gap-4 justify-center">
             <AddEvent onEventAdded={fetchEvents} />
             <Link
@@ -339,7 +223,7 @@ export default function AdminDashboard() {
             </Link>
           </div>
 
-          {/* ✅ Current Events List */}
+          {/* Current Events List */}
           <div className="mt-8 w-full max-w-2xl">
             <h2 className="text-2xl font-semibold mb-4">Current Events</h2>
 
@@ -382,7 +266,7 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* ✅ Expired Events List */}
+          {/* Expired Events List */}
           {!loading && expiredEvents.length > 0 && (
             <div className="mt-8 w-full max-w-2xl">
               <h2 className="text-2xl font-semibold mb-4">Expired Events</h2>

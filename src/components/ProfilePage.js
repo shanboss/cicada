@@ -1,59 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { user, profile, loading } = useAuth();
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Use getSession first (more reliable, doesn't throw errors)
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-
-        if (sessionError || !session?.user) {
-          // Redirect to home if not signed in
-          router.push("/");
-          return;
-        }
-
-        setUser(session.user);
-
-        // Fetch profile from profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          setError("Failed to load profile data.");
-        } else {
-          setProfile(profileData);
-        }
-      } catch (err) {
-        console.error("Unexpected error:", err);
-        setError("An unexpected error occurred.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserProfile();
-  }, [router]);
+    if (!loading && !user) {
+      router.push("/");
+    }
+  }, [user, loading, router]);
 
   // Don't render if user is not signed in (redirecting)
   if (!user && !loading) {
@@ -194,13 +153,6 @@ export default function ProfilePage() {
             </Link>
           </div>
         </div>
-
-        {/* Error Message */}
-        {error && profile && (
-          <div className="mt-6 bg-red-900/20 border border-red-500/50 rounded-lg p-4">
-            <p className="text-red-400">{error}</p>
-          </div>
-        )}
       </div>
     </div>
   );
