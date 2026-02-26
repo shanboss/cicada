@@ -5,6 +5,7 @@ import EditEvent from "./EditEvent";
 import Checkout from "./Checkout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Gallery from "./Gallery";
 
 const Events = () => {
   const router = useRouter();
@@ -144,6 +145,13 @@ const Events = () => {
             </div>
           ))}
         </div>
+
+        {/* Gallery between Upcoming and Past events */}
+        {!loading && (
+          <div className="mt-12 -mx-4 sm:-mx-6 lg:-mx-8">
+            <Gallery />
+          </div>
+        )}
 
         {/* Past Events Section */}
         {!loading && pastEvents.length > 0 && (

@@ -50,3 +50,24 @@ body {
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
 }
+
+@keyframes gallery-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.gallery-marquee {
+  animation: gallery-marquee 20s linear infinite;
+}
+
+.gallery-marquee--paused {
+  animation-play-state: paused;
+}
+
+.gallery-marquee-reverse {
+  animation-direction: reverse;
+}
