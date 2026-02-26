@@ -86,11 +86,18 @@ export function AuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
 
       if (event === "TOKEN_REFRESHED") {
-        // Session still valid, no state change needed
+        return;
+      }
+
+      if (event === "TOKEN_REFRESH_FAILED") {
+        console.error("[AuthProvider] Token refresh failed, signing out");
+        supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
         return;
       }
 
@@ -102,7 +109,7 @@ export function AuthProvider({ children }) {
 
       if (event === "SIGNED_IN") {
         setUser(session.user);
-        await fetchProfile(session.user);
+        fetchProfile(session.user);
       }
     });
 
