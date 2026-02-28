@@ -5,7 +5,6 @@ import EditEvent from "./EditEvent";
 import Checkout from "./Checkout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Gallery from "./Gallery";
 
 const Events = () => {
   const router = useRouter();
@@ -23,7 +22,7 @@ const Events = () => {
         .from("events")
         .select("*")
         .order("date", { ascending: false });
-      
+
       if (error) {
         console.error("Error fetching events:", error);
         // Set empty array on error to prevent rendering issues
@@ -65,12 +64,8 @@ const Events = () => {
   });
 
   return (
-    <section
-      id="events"
-      className="relative py-10 text-white overflow-hidden"
-    >
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0 animated-gradient opacity-80"></div>
+    <section id="events" className="relative text-white overflow-hidden py-2">
+      
 
       {/* Glassy Overlay */}
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
@@ -78,79 +73,76 @@ const Events = () => {
       {/* Content with relative positioning */}
       <div className="relative z-10 px-4 sm:px-6 lg:px-8">
         {/* Upcoming Events Section */}
-        <h2 className="text-4xl font-bold text-left max-w-5xl mx-auto">
-          Upcoming Events
-        </h2>
-        <div className="mt-6 max-w-5xl mx-auto space-y-6 bg-white/10">
-          {loading && <p>Loading events...</p>}
-          {!loading && upcomingEvents.length === 0 && (
-            <p className="text-center text-gray-400">
-              No upcoming events at the moment.
-            </p>
-          )}
-          {upcomingEvents.map((event) => (
-            <div
-              key={event.id}
-              className="p-4 border border-white/20 rounded-lg flex flex-col md:flex-row gap-4 bg-white/5 backdrop-blur-md shadow-lg"
-            >
-              {editingEventId === event.id ? (
-                <EditEvent
-                  event={event}
-                  onEventUpdated={handleEventUpdated}
-                  onClose={() => setEditingEventId(null)}
-                />
-              ) : (
-                <>
-                  {/* Left Column: Image */}
-                  <div className="w-full md:w-1/3">
-                    <img
-                      src={event.image}
-                      alt={event.event_title}
-                      className="w-full h-auto rounded"
-                    />
-                  </div>
-                  {/* Right Column: Details */}
-                  <div className="w-full md:w-2/3 flex flex-col justify-center">
-                    <div className="space-y-4">
-                      <h3 className="text-xl font-semibold">
-                        {event.event_title}
-                      </h3>
-                      <p className="text-gray-300">{event.location}</p>
-                      <p className="text-neutral-400">
-                        {new Date(
-                          `1970-01-01T${event.time}`
-                        ).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                        <span className="text-gray-300 bg-indigo-800 px-4 py-2 rounded-full mx-2">
-                          {event.date}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="mt-4 w-full">
-                      {event.stripe_price_id && (
-                        <Link
-                          href={`/checkout/${event.id}`}
-                          className="block rounded-xl px-4 py-2 bg-indigo-800 w-full hover:bg-indigo-700 duration-200 text-center"
-                        >
-                          Buy Tickets
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </>
+        {upcomingEvents.length > 0 && (
+          <>
+            <h2 className="text-4xl font-bold text-left max-w-5xl mx-auto">
+              Upcoming Events
+            </h2>
+            <div className="mt-6 max-w-5xl mx-auto space-y-6 bg-white/10">
+              {loading && <p>Loading events...</p>}
+              {!loading && upcomingEvents.length === 0 && (
+                <p className="text-center text-gray-400">
+                  No upcoming events at the moment.
+                </p>
               )}
+              {upcomingEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="p-4 border border-white/20 rounded-lg flex flex-col md:flex-row gap-4 bg-white/5 backdrop-blur-md shadow-lg"
+                >
+                  {editingEventId === event.id ? (
+                    <EditEvent
+                      event={event}
+                      onEventUpdated={handleEventUpdated}
+                      onClose={() => setEditingEventId(null)}
+                    />
+                  ) : (
+                    <>
+                      {/* Left Column: Image */}
+                      <div className="w-full md:w-1/3">
+                        <img
+                          src={event.image}
+                          alt={event.event_title}
+                          className="w-full h-auto rounded"
+                        />
+                      </div>
+                      {/* Right Column: Details */}
+                      <div className="w-full md:w-2/3 flex flex-col justify-center">
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-semibold">
+                            {event.event_title}
+                          </h3>
+                          <p className="text-gray-300">{event.location}</p>
+                          <p className="text-neutral-400">
+                            {new Date(
+                              `1970-01-01T${event.time}`,
+                            ).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                            <span className="text-gray-300 bg-indigo-800 px-4 py-2 rounded-full mx-2">
+                              {event.date}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="mt-4 w-full">
+                          {event.stripe_price_id && (
+                            <Link
+                              href={`/checkout/${event.id}`}
+                              className="block rounded-xl px-4 py-2 bg-indigo-800 w-full hover:bg-indigo-700 duration-200 text-center"
+                            >
+                              Buy Tickets
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        {/* Gallery between Upcoming and Past events */}
-        {!loading && (
-          <div className="mt-12 -mx-4 sm:-mx-6 lg:-mx-8">
-            <Gallery />
-          </div>
+          </>
         )}
 
         {/* Past Events Section */}

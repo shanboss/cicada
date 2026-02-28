@@ -61,7 +61,7 @@ body {
 }
 
 .gallery-marquee {
-  animation: gallery-marquee 20s linear infinite;
+  animation: gallery-marquee 40s linear infinite;
 }
 
 .gallery-marquee--paused {

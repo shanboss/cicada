@@ -16,8 +16,8 @@ const Navbar = () => {
   const userInitial = profile?.first_name
     ? profile.first_name.charAt(0).toUpperCase()
     : user?.user_metadata?.first_name
-    ? user.user_metadata.first_name.charAt(0).toUpperCase()
-    : user?.email?.charAt(0).toUpperCase() || "U";
+      ? user.user_metadata.first_name.charAt(0).toUpperCase()
+      : user?.email?.charAt(0).toUpperCase() || "U";
 
   const handleSignOut = async () => {
     await signOut();
@@ -47,17 +47,9 @@ const Navbar = () => {
   }, [isOpen]);
 
   return (
-    <nav className="fixed top-0 w-full bg-black bg-opacity-90 text-white shadow-md z-50">
+    <nav className="fixed top-0 w-full bg-black/5 bg-opacity-90 text-white shadow-md z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <Link href="/" className="flex flex-row items-center justify-center">
-          {/* Logo */}
-          <Image
-            src="/newLogo.png"
-            alt="Cicada Logo"
-            width={100}
-            height={100}
-            className="block"
-          />
           <div>
             <h1 className="text-2xl font-bold tracking-wide hover:cursor-pointer">
               CICADA
