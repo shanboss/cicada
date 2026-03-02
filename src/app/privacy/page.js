@@ -62,7 +62,9 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside space-y-2 text-neutral-300 ml-4">
               <li>Process ticket purchases and send confirmation emails</li>
               <li>Manage your account and provide customer support</li>
-              <li>Send you updates about events and promotions (with your consent)</li>
+              <li>
+                Send you updates about events and promotions (with your consent)
+              </li>
               <li>Verify ticket authenticity at event entry</li>
               <li>Improve our website and services</li>
               <li>Comply with legal obligations</li>
@@ -80,8 +82,8 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside space-y-2 text-neutral-300 ml-4">
               <li>
                 <strong>Service Providers:</strong> Third-party vendors who
-                assist us in operating our website, processing payments (Stripe),
-                and sending emails.
+                assist us in operating our website, processing payments
+                (Stripe), and sending emails.
               </li>
               <li>
                 <strong>Event Venues:</strong> Limited information necessary for
@@ -127,9 +129,9 @@ export default function PrivacyPolicy() {
               7. Cookies and Tracking
             </h2>
             <p className="text-neutral-300 leading-relaxed">
-              We use cookies and similar technologies to enhance your experience,
-              analyze site traffic, and for authentication purposes. You can
-              control cookie settings through your browser preferences.
+              We use cookies and similar technologies to enhance your
+              experience, analyze site traffic, and for authentication purposes.
+              You can control cookie settings through your browser preferences.
             </p>
           </section>
 
@@ -138,9 +140,10 @@ export default function PrivacyPolicy() {
               8. Third-Party Services
             </h2>
             <p className="text-neutral-300 leading-relaxed">
-              Our website may contain links to third-party websites and services.
-              We are not responsible for the privacy practices of these external
-              sites. We encourage you to review their privacy policies.
+              Our website may contain links to third-party websites and
+              services. We are not responsible for the privacy practices of
+              these external sites. We encourage you to review their privacy
+              policies.
             </p>
           </section>
 
@@ -161,9 +164,9 @@ export default function PrivacyPolicy() {
               10. Changes to This Policy
             </h2>
             <p className="text-neutral-300 leading-relaxed">
-              We may update this Privacy Policy from time to time. We will notify
-              you of any changes by posting the new Privacy Policy on this page
-              and updating the "Last updated" date.
+              We may update this Privacy Policy from time to time. We will
+              notify you of any changes by posting the new Privacy Policy on
+              this page and updating the "Last updated" date.
             </p>
           </section>
 
