@@ -19,7 +19,7 @@ export const metadata = {
 export default function Home() {
   return (
     <div className="relative bg-black text-white">
-      <VideoOverlay src="/cicadaTrailer.mp4" />
+      <VideoOverlay src="/CicadaTrailer.mp4" />
 
       <div className="relative z-10">
         <Gallery />

@@ -7,6 +7,9 @@ const BUCKET_NAME = "images";
 const FOLDER_PATHS = ["images/Gallery", "Gallery"];
 const MARQUEE_SPEED = 50; // pixels per second
 
+// Stable empty array so default prop doesn't create new reference every render (which would re-run the effect and re-fetch constantly).
+const EMPTY_IMAGES = [];
+
 // Try to infer DJ and event names from the filename.
 // Example convention: "dj-aurora_summer-bass-night.jpg"
 const parseImageMetadata = (name) => {
@@ -39,9 +42,12 @@ const parseImageMetadata = (name) => {
   };
 };
 
-const Gallery = ({ images = [] }) => {
+const Gallery = ({ images }) => {
   const [slides, setSlides] = useState([]);
   const [isDragging, setIsDragging] = useState(null); // 'forward' | 'reverse' | null
+  const imagesKeyRef = useRef(null);
+
+  const resolvedImages = images ?? EMPTY_IMAGES;
 
   const forwardRowRef = useRef(null);
   const reverseRowRef = useRef(null);
@@ -54,12 +60,13 @@ const Gallery = ({ images = [] }) => {
   const dragStartXRef = useRef(0);
   const dragStartPosRef = useRef(0);
 
-  // Normalise either passed-in images or Supabase images into a common structure
+  // Normalise either passed-in images or Supabase images into a common structure.
+  // Only run when the actual list of image URLs changes (stable key); avoids re-fetching on every render.
   useEffect(() => {
     const useProvidedImages = async () => {
-      if (images && images.length > 0) {
-        const normalised = images.map((src, index) => ({
-          src,
+      if (resolvedImages && resolvedImages.length > 0) {
+        const normalised = resolvedImages.map((src, index) => ({
+          src: typeof src === "string" ? src : src?.src ?? src,
           djName: `Cicada DJ ${index + 1}`,
           eventName: "Cicada Event",
         }));
@@ -129,8 +136,18 @@ const Gallery = ({ images = [] }) => {
       }
     };
 
+    // Only run when the list of images actually changes (by value), not on every render.
+    const key =
+      resolvedImages.length +
+      "|" +
+      resolvedImages
+        .map((u) => (typeof u === "string" ? u : u?.src ?? u))
+        .join(",");
+    if (imagesKeyRef.current === key) return;
+    imagesKeyRef.current = key;
+
     init();
-  }, [images]);
+  }, [resolvedImages]);
 
   // JS-driven marquee: update positions and apply transforms; pause while dragging
   useEffect(() => {
