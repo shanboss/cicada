@@ -47,7 +47,8 @@ const Gallery = ({ images = [] }) => {
   const reverseRowRef = useRef(null);
   const forwardPosRef = useRef(0);
   const reversePosRef = useRef(0);
-  const halfWidthRef = useRef(0);
+  const forwardHalfWidthRef = useRef(0);
+  const reverseHalfWidthRef = useRef(0);
   const rafIdRef = useRef(null);
   const lastTimeRef = useRef(null);
   const dragStartXRef = useRef(0);
@@ -139,13 +140,17 @@ const Gallery = ({ images = [] }) => {
     const reverseRow = reverseRowRef.current;
     if (!forwardRow || !reverseRow) return;
 
-    if (halfWidthRef.current <= 0) {
-      halfWidthRef.current = forwardRow.scrollWidth / 2;
+    if (forwardHalfWidthRef.current <= 0) {
+      forwardHalfWidthRef.current = forwardRow.scrollWidth / 2;
+    }
+    if (reverseHalfWidthRef.current <= 0) {
+      reverseHalfWidthRef.current = reverseRow.scrollWidth / 2;
     }
 
     const tick = (now) => {
-      const halfWidth = halfWidthRef.current;
-      if (halfWidth <= 0) {
+      const fHalf = forwardHalfWidthRef.current;
+      const rHalf = reverseHalfWidthRef.current;
+      if (fHalf <= 0 && rHalf <= 0) {
         rafIdRef.current = requestAnimationFrame(tick);
         return;
       }
@@ -153,17 +158,17 @@ const Gallery = ({ images = [] }) => {
       const dt = (now - lastTimeRef.current) / 1000;
       lastTimeRef.current = now;
 
-      if (isDragging !== "forward") {
+      if (isDragging !== "forward" && fHalf > 0) {
         forwardPosRef.current += MARQUEE_SPEED * dt;
-        if (forwardPosRef.current >= halfWidth)
-          forwardPosRef.current -= halfWidth;
+        if (forwardPosRef.current >= fHalf)
+          forwardPosRef.current -= fHalf;
         forwardRow.style.transform = `translateX(${-forwardPosRef.current}px)`;
       }
-      if (isDragging !== "reverse") {
+      if (isDragging !== "reverse" && rHalf > 0) {
         reversePosRef.current += MARQUEE_SPEED * dt;
-        if (reversePosRef.current >= halfWidth)
-          reversePosRef.current -= halfWidth;
-        reverseRow.style.transform = `translateX(${reversePosRef.current - halfWidth}px)`;
+        if (reversePosRef.current >= rHalf)
+          reversePosRef.current -= rHalf;
+        reverseRow.style.transform = `translateX(${reversePosRef.current - rHalf}px)`;
       }
 
       rafIdRef.current = requestAnimationFrame(tick);
@@ -179,7 +184,8 @@ const Gallery = ({ images = [] }) => {
 
   const handlePointerDown = useCallback((row, e) => {
     const isForward = row === "forward";
-    if (halfWidthRef.current <= 0) return;
+    const halfWidth = isForward ? forwardHalfWidthRef.current : reverseHalfWidthRef.current;
+    if (halfWidth <= 0) return;
     const clientX = getPointerX(e);
     dragStartXRef.current = clientX;
     dragStartPosRef.current = isForward
@@ -195,7 +201,7 @@ const Gallery = ({ images = [] }) => {
       e.preventDefault();
       const clientX = getPointerX(e);
       const delta = clientX - dragStartXRef.current;
-      const halfWidth = halfWidthRef.current;
+      const halfWidth = row === "forward" ? forwardHalfWidthRef.current : reverseHalfWidthRef.current;
       if (halfWidth <= 0) return;
 
       if (row === "forward") {
@@ -225,23 +231,34 @@ const Gallery = ({ images = [] }) => {
   // Re-measure when slides change
   useEffect(() => {
     if (!slides.length) return;
-    halfWidthRef.current = 0;
+    forwardHalfWidthRef.current = 0;
+    reverseHalfWidthRef.current = 0;
     const forwardRow = forwardRowRef.current;
-    if (forwardRow) {
-      const measure = () => {
-        if (forwardRowRef.current)
-          halfWidthRef.current = forwardRowRef.current.scrollWidth / 2;
-      };
+    const reverseRow = reverseRowRef.current;
+    const measure = () => {
+      if (forwardRowRef.current)
+        forwardHalfWidthRef.current = forwardRowRef.current.scrollWidth / 2;
+      if (reverseRowRef.current)
+        reverseHalfWidthRef.current = reverseRowRef.current.scrollWidth / 2;
+    };
+    if (forwardRow || reverseRow) {
       measure();
       const ro = new ResizeObserver(measure);
-      ro.observe(forwardRow);
-      return () => ro.disconnect();
+      if (forwardRow) ro.observe(forwardRow);
+      if (reverseRow) ro.observe(reverseRow);
+      return () => {
+        ro.disconnect();
+      };
     }
   }, [slides]);
 
   if (!slides.length) {
     return null;
   }
+
+  const mid = Math.ceil(slides.length / 2);
+  const firstHalf = slides.slice(0, mid);
+  const secondHalf = slides.slice(mid);
 
   return (
     <section className="relative w-full py-6 px-2 ">
@@ -250,6 +267,8 @@ const Gallery = ({ images = [] }) => {
           {[false, true].map((isReverse) => {
             const rowKey = isReverse ? "reverse" : "forward";
             const isRowDragging = isDragging === rowKey;
+            const rowSlides = isReverse ? secondHalf : firstHalf;
+            const rowSlidesDuplicated = [...rowSlides, ...rowSlides];
 
             return (
               <div
@@ -266,7 +285,7 @@ const Gallery = ({ images = [] }) => {
                   if (e.buttons === 0) setIsDragging(null);
                 }}
               >
-                {[...slides, ...slides].map((slide, idx) => (
+                {rowSlidesDuplicated.map((slide, idx) => (
                   <div
                     key={`${slide.src}-${isReverse ? "r" : "f"}-${idx}`}
                     className="relative flex-shrink-0 border hover:border-[0.2rem] border-cyan-200 hover:border-pink-300 w-[18rem] h-48 sm:h-56 md:h-60 rounded-2xl overflow-hidden bg-black/60 group cursor-pointer"
@@ -276,20 +295,6 @@ const Gallery = ({ images = [] }) => {
                       alt={`${slide.djName} at ${slide.eventName}`}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-
-                    {/* Top overlay for DJ name */}
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/85 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-start justify-start px-3 py-2">
-                      <span className="text-xs sm:text-sm font-semibold tracking-wide text-neutral-100 drop-shadow-md">
-                        {slide.djName}
-                      </span>
-                    </div>
-
-                    {/* Bottom overlay for event name */}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/85 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between px-3 py-2">
-                      <span className="text-[0.7rem] sm:text-xs font-medium text-neutral-200 drop-shadow-md">
-                        {slide.eventName}
-                      </span>
-                    </div>
                   </div>
                 ))}
               </div>
