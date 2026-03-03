@@ -44,6 +44,7 @@ const parseImageMetadata = (name) => {
 
 const Gallery = ({ images }) => {
   const [slides, setSlides] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(null); // 'forward' | 'reverse' | null
   const imagesKeyRef = useRef(null);
 
@@ -130,9 +131,13 @@ const Gallery = ({ images }) => {
     };
 
     const init = async () => {
-      const usedProvided = await useProvidedImages();
-      if (!usedProvided) {
-        await fetchFromSupabase();
+      try {
+        const usedProvided = await useProvidedImages();
+        if (!usedProvided) {
+          await fetchFromSupabase();
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -268,6 +273,37 @@ const Gallery = ({ images }) => {
       };
     }
   }, [slides]);
+
+  const renderSkeleton = () => {
+    const rows = [0, 1];
+    const itemsPerRow = 5;
+
+    return (
+      <section className="relative w-full py-6 px-2">
+        <div className="relative w-full py-6 overflow-hidden">
+          <div className="space-y-4">
+            {rows.map((row) => (
+              <div
+                key={`skeleton-row-${row}`}
+                className="flex gap-4 w-max"
+              >
+                {Array.from({ length: itemsPerRow }).map((_, idx) => (
+                  <div
+                    key={`skeleton-card-${row}-${idx}`}
+                    className="relative flex-shrink-0 w-[18rem] h-48 sm:h-56 md:h-60 rounded-2xl overflow-hidden bg-gradient-to-r from-slate-800/80 via-slate-700/80 to-slate-800/80 animate-pulse"
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  if (isLoading) {
+    return renderSkeleton();
+  }
 
   if (!slides.length) {
     return null;
