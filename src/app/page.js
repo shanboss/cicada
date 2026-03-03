@@ -1,8 +1,6 @@
-import Hero from "@/components/Hero";
-import About from "@/components/About";
 import Gallery from "@/components/Gallery";
+import Marquee from "@/components/Marquee";
 import Events from "@/components/Events";
-import Membership from "@/components/Membership";
 import VideoOverlay from "@/components/VideoOverlay";
 
 export const metadata = {
@@ -23,6 +21,7 @@ export default function Home() {
 
       <div className="relative z-10">
         <Gallery />
+        <Marquee />
         <Events />
       </div>
     </div>
