@@ -122,12 +122,19 @@ export function AuthProvider({ children }) {
   const isAdmin =
     profile?.user_role === "admin" || user?.user_metadata?.role === "admin";
 
+  const refreshProfile = useCallback(async () => {
+    if (user) {
+      await fetchProfile(user);
+    }
+  }, [user, fetchProfile]);
+
   const value = {
     user,
     profile,
     isAdmin,
     loading,
     signOut: handleSignOut,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

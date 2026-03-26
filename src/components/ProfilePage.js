@@ -1,12 +1,36 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "../../lib/supabaseClient";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, refreshProfile } = useAuth();
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    phone_number: "",
+  });
+
+  // Sync form data when profile/user changes or edit mode is entered
+  useEffect(() => {
+    if (editing) {
+      setFormData({
+        first_name:
+          profile?.first_name || user?.user_metadata?.first_name || "",
+        last_name:
+          profile?.last_name || user?.user_metadata?.last_name || "",
+        phone_number:
+          profile?.phone_number || user?.user_metadata?.phone_number || "",
+      });
+    }
+  }, [editing, profile, user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -14,7 +38,6 @@ export default function ProfilePage() {
     }
   }, [user, loading, router]);
 
-  // Don't render if user is not signed in (redirecting)
   if (!user && !loading) {
     return null;
   }
@@ -27,15 +50,58 @@ export default function ProfilePage() {
     );
   }
 
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone_number: formData.phone_number,
+      })
+      .eq("id", user.id);
+
+    if (updateError) {
+      setError(updateError.message);
+      setSaving(false);
+      return;
+    }
+
+    await refreshProfile();
+    setSaving(false);
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditing(false);
+    setError(null);
+  };
+
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-300 py-12 px-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">My Profile</h1>
-          <p className="text-neutral-400">
-            View and manage your account information
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">My Profile</h1>
+            <p className="text-neutral-400">
+              View and manage your account information
+            </p>
+          </div>
+          {!editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium cursor-pointer"
+            >
+              Edit Profile
+            </button>
+          )}
         </div>
 
         {/* Profile Card */}
@@ -65,28 +131,55 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Profile Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-neutral-400 mb-2">
                 First Name
               </label>
-              <p className="text-white text-lg">
-                {profile?.first_name ||
-                  user?.user_metadata?.first_name ||
-                  "Not set"}
-              </p>
+              {editing ? (
+                <input
+                  type="text"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-neutral-700 border border-neutral-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              ) : (
+                <p className="text-white text-lg">
+                  {profile?.first_name ||
+                    user?.user_metadata?.first_name ||
+                    "Not set"}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-neutral-400 mb-2">
                 Last Name
               </label>
-              <p className="text-white text-lg">
-                {profile?.last_name ||
-                  user?.user_metadata?.last_name ||
-                  "Not set"}
-              </p>
+              {editing ? (
+                <input
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-neutral-700 border border-neutral-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              ) : (
+                <p className="text-white text-lg">
+                  {profile?.last_name ||
+                    user?.user_metadata?.last_name ||
+                    "Not set"}
+                </p>
+              )}
             </div>
 
             <div>
@@ -100,11 +193,21 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium text-neutral-400 mb-2">
                 Phone Number
               </label>
-              <p className="text-white text-lg">
-                {profile?.phone_number ||
-                  user?.user_metadata?.phone_number ||
-                  "Not provided"}
-              </p>
+              {editing ? (
+                <input
+                  type="tel"
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-neutral-700 border border-neutral-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              ) : (
+                <p className="text-white text-lg">
+                  {profile?.phone_number ||
+                    user?.user_metadata?.phone_number ||
+                    "Not provided"}
+                </p>
+              )}
             </div>
 
             <div>
@@ -128,6 +231,26 @@ export default function ProfilePage() {
               </p>
             </div>
           </div>
+
+          {/* Edit Actions */}
+          {editing && (
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium cursor-pointer"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={saving}
+                className="px-6 py-2.5 bg-neutral-700 hover:bg-neutral-600 disabled:opacity-50 text-white rounded-lg transition-colors text-sm font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="mt-8 pt-8 border-t border-neutral-700 flex flex-col sm:flex-row gap-4">
