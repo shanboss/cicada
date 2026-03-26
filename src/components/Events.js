@@ -64,7 +64,7 @@ const Events = () => {
   });
 
   return (
-    <section id="events" className="relative text-white overflow-hidden py-2">
+    <section id="events" className="relative text-white overflow-hidden pt-10 py-2">
       
 
       {/* Glassy Overlay */}
