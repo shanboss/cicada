@@ -5,6 +5,7 @@ import EditEvent from "./EditEvent";
 import Checkout from "./Checkout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PaintBackground from "./PaintBackground";
 
 const Events = () => {
   const router = useRouter();
@@ -67,9 +68,6 @@ const Events = () => {
     <section id="events" className="relative text-white overflow-hidden pt-10 py-2">
       
 
-      {/* Glassy Overlay */}
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
-
       {/* Content with relative positioning */}
       <div className="relative z-10 px-4 sm:px-6 lg:px-8">
         {/* Upcoming Events Section */}
@@ -86,9 +84,9 @@ const Events = () => {
                 </p>
               )}
               {upcomingEvents.map((event) => (
+                <PaintBackground key={event.id} imageSrc={event.image}>
                 <div
-                  key={event.id}
-                  className="p-4 border border-white/20 rounded-lg flex flex-col md:flex-row gap-4 bg-white/5 backdrop-blur-md shadow-lg"
+                  className="p-4 border border-white/20 rounded-lg flex flex-col md:flex-row gap-4 backdrop-blur-md shadow-lg"
                 >
                   {editingEventId === event.id ? (
                     <EditEvent
@@ -140,6 +138,7 @@ const Events = () => {
                     </>
                   )}
                 </div>
+                </PaintBackground>
               ))}
             </div>
           </>

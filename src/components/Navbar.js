@@ -47,7 +47,7 @@ const Navbar = () => {
   }, [isOpen]);
 
   return (
-    <nav className="fixed top-0 w-full bg-black/5 bg-opacity-90 text-white shadow-md z-50">
+    <nav className="fixed top-0 w-full bg-black/90 text-white shadow-md z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <Link href="/" className="flex flex-row items-center justify-center">
           <div>
@@ -97,7 +97,7 @@ const Navbar = () => {
               </Link>
             </li>
           )}
-          {/* <li>
+          <li>
             <Link
               href="/gallery"
               className="hover:text-gray-400"
@@ -105,7 +105,7 @@ const Navbar = () => {
             >
               Gallery
             </Link>
-          </li> */}
+          </li>
           {!user ? (
             <>
               <li>
@@ -220,7 +220,7 @@ const Navbar = () => {
               </Link>
             </li>
           )}
-          {/* <li>
+          <li>
             <Link
               href="/gallery"
               className="hover:text-gray-400"
@@ -228,7 +228,7 @@ const Navbar = () => {
             >
               Gallery
             </Link>
-          </li> */}
+          </li>
           {!user ? (
             <>
               <li>
@@ -245,17 +245,29 @@ const Navbar = () => {
               </li>
             </>
           ) : (
-            <li>
-              <button
-                onClick={() => {
-                  handleSignOut();
-                  setIsOpen(false);
-                }}
-                className="text-red-400 hover:text-red-300 transition-colors"
-              >
-                Sign Out
-              </button>
-            </li>
+            <>
+              <li>
+                <Link
+                  href="/profile"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-semibold flex items-center justify-center hover:bg-indigo-500 transition-colors">
+                    {userInitial || "U"}
+                  </div>
+                </Link>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setIsOpen(false);
+                  }}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </li>
+            </>
           )}
           <li>
             <a

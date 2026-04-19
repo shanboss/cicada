@@ -1,4 +1,3 @@
-import Gallery from "@/components/Gallery";
 import Events from "@/components/Events";
 import VideoOverlay from "@/components/VideoOverlay";
 
@@ -19,7 +18,6 @@ export default function Home() {
       <VideoOverlay src="/CicadaTrailer.mp4" />
 
       <div className="relative z-10">
-        <Gallery />
         <Events />
       </div>
     </div>
