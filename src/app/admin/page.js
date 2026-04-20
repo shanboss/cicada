@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from "react";
 import AddEvent from "@/components/AddEvent";
 import EditEvent from "@/components/EditEvent";
+import AdminSidebar from "@/components/AdminSidebar";
+import SendTickets from "@/components/SendTickets";
+import PurchaseAnalysis from "@/components/PurchaseAnalysis";
+import EventsTable from "@/components/EventsTable";
 import { supabase } from "../../../lib/supabaseClient";
-import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
@@ -16,6 +19,7 @@ export default function AdminDashboard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("events");
 
   // Fetch events from Supabase
   const fetchEvents = async () => {
@@ -36,24 +40,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (user) fetchEvents();
   }, [user]);
-
-  // Handle event deletion
-  const handleDelete = async (eventId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this event?"
-    );
-    if (!confirmDelete) return;
-
-    const { error } = await supabase.from("events").delete().eq("id", eventId);
-
-    if (error) {
-      console.error("Error deleting event:", error);
-    } else {
-      setEvents((prevEvents) =>
-        prevEvents.filter((event) => event.id !== eventId)
-      );
-    }
-  };
 
   // Handle login
   const handleLogin = async (e) => {
@@ -82,25 +68,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handle logout
-  const handleLogout = async () => {
-    await signOut();
-  };
-
-  // Separate events into current and expired
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const currentEvents = events.filter((event) => {
-    const eventDate = new Date(event.date + "T00:00:00");
-    return eventDate >= today;
-  });
-
-  const expiredEvents = events.filter((event) => {
-    const eventDate = new Date(event.date + "T00:00:00");
-    return eventDate < today;
-  });
-
   if (authLoading) {
     return (
       <div className="flex min-h-screen flex-col mt-12 items-center justify-center px-6 py-12 bg-neutral-900 text-neutral-300">
@@ -109,202 +76,136 @@ export default function AdminDashboard() {
     );
   }
 
-  return (
-    <div className="flex min-h-screen flex-col mt-12 items-center px-6 py-12 bg-neutral-900 text-neutral-300">
-      <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+  // Login form or access denied — keep centered layout
+  if (!user || (user && !isAdmin)) {
+    return (
+      <div className="flex min-h-screen flex-col mt-12 items-center px-6 py-12 bg-neutral-900 text-neutral-300">
+        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
 
-      {editingEvent && (
-        <EditEvent
-          event={editingEvent}
-          onEventUpdated={fetchEvents}
-          onClose={() => setEditingEvent(null)}
-        />
-      )}
-
-      {/* Show access denied if not admin */}
-      {user && !isAdmin ? (
-        <div className="mt-6 w-full max-w-2xl bg-red-900/20 border border-red-500 p-6 rounded-lg">
-          <h2 className="text-2xl font-semibold mb-4 text-red-400">
-            Access Denied
-          </h2>
-          <p className="text-neutral-300">
-            You do not have permission to access this page. Admin role required.
-          </p>
-          <Link
-            href="/"
-            className="mt-4 inline-block text-indigo-400 hover:text-indigo-300 underline"
-          >
-            Return to Home
-          </Link>
-        </div>
-      ) : !user ? (
-        <form
-          onSubmit={handleLogin}
-          className="mt-6 w-full max-w-md bg-neutral-800 p-6 rounded-lg shadow-md"
-        >
-          <h2 className="text-2xl font-semibold mb-4 text-white">
-            Admin Login
-          </h2>
-
-          {/* Email Input */}
-          <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-neutral-400"
-            >
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 mt-1 bg-neutral-700 rounded text-white"
-              required
-            />
-          </div>
-
-          {/* Password Input */}
-          <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-neutral-400"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 mt-1 bg-neutral-700 rounded text-white"
-              required
-            />
-          </div>
-
-          {/* Error Message */}
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-indigo-500 hover:bg-indigo-400 text-white py-2 rounded"
-          >
-            Login
-          </button>
-
-          {/* Dev-only auto-login button */}
-          {process.env.NODE_ENV === "development" && (
-            <button
-              type="button"
-              onClick={handleDevLogin}
-              className="w-full mt-3 bg-yellow-600 hover:bg-yellow-500 text-white py-2 rounded"
-            >
-              Dev Login
-            </button>
-          )}
-        </form>
-      ) : (
-        <>
-          {/* Admin Actions */}
-          <div className="mt-6 w-full max-w-2xl flex gap-4 justify-center">
-            <AddEvent onEventAdded={fetchEvents} />
+        {user && !isAdmin ? (
+          <div className="mt-6 w-full max-w-2xl bg-red-900/20 border border-red-500 p-6 rounded-lg">
+            <h2 className="text-2xl font-semibold mb-4 text-red-400">
+              Access Denied
+            </h2>
+            <p className="text-neutral-300">
+              You do not have permission to access this page. Admin role
+              required.
+            </p>
             <Link
-              href="/verify"
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center gap-2"
+              href="/"
+              className="mt-4 inline-block text-indigo-400 hover:text-indigo-300 underline"
             >
-              Verify Tickets
-            </Link>
-            <Link
-              href="/admin/generate-qr"
-              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-semibold flex items-center gap-2"
-            >
-              Admin QR Code
+              Return to Home
             </Link>
           </div>
+        ) : (
+          <form
+            onSubmit={handleLogin}
+            className="mt-6 w-full max-w-md bg-neutral-800 p-6 rounded-lg shadow-md"
+          >
+            <h2 className="text-2xl font-semibold mb-4 text-white">
+              Admin Login
+            </h2>
 
-          {/* Current Events List */}
-          <div className="mt-8 w-full max-w-2xl">
-            <h2 className="text-2xl font-semibold mb-4">Current Events</h2>
-
-            {loading ? (
-              <p>Loading events...</p>
-            ) : currentEvents.length === 0 ? (
-              <p>No current events available.</p>
-            ) : (
-              <ul className="space-y-4">
-                {currentEvents.map((event) => (
-                  <li
-                    key={event.id}
-                    className="flex justify-between items-center p-4 bg-neutral-800 rounded-lg shadow-md"
-                  >
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
-                        {event.event_title}
-                      </h3>
-                      <p className="text-sm text-neutral-500 mt-1">
-                        {new Date(event.date + "T00:00:00").toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex flex-row">
-                      <button
-                        onClick={() => setEditingEvent(event)}
-                        className="ml-4 p-2 bg-blue-600 rounded-full hover:bg-blue-500 transition"
-                      >
-                        <PencilSquareIcon className="h-5 w-5 text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(event.id)}
-                        className="ml-4 p-2 bg-red-600 rounded-full hover:bg-red-500 transition"
-                      >
-                        <TrashIcon className="h-5 w-5 text-white" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Expired Events List */}
-          {!loading && expiredEvents.length > 0 && (
-            <div className="mt-8 w-full max-w-2xl">
-              <h2 className="text-2xl font-semibold mb-4">Expired Events</h2>
-              <ul className="space-y-4">
-                {expiredEvents.map((event) => (
-                  <li
-                    key={event.id}
-                    className="flex justify-between items-center p-4 bg-neutral-800 rounded-lg shadow-md opacity-75"
-                  >
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
-                        {event.event_title}
-                      </h3>
-                      <p className="text-sm text-neutral-500 mt-1">
-                        {new Date(event.date + "T00:00:00").toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex flex-row">
-                      <button
-                        onClick={() => setEditingEvent(event)}
-                        className="ml-4 p-2 bg-blue-600 rounded-full hover:bg-blue-500 transition"
-                      >
-                        <PencilSquareIcon className="h-5 w-5 text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(event.id)}
-                        className="ml-4 p-2 bg-red-600 rounded-full hover:bg-red-500 transition"
-                      >
-                        <TrashIcon className="h-5 w-5 text-white" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+            <div className="mb-4">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-neutral-400"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-2 mt-1 bg-neutral-700 rounded text-white"
+                required
+              />
             </div>
-          )}
-        </>
-      )}
+
+            <div className="mb-4">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-neutral-400"
+              >
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 mt-1 bg-neutral-700 rounded text-white"
+                required
+              />
+            </div>
+
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+            <button
+              type="submit"
+              className="w-full bg-indigo-500 hover:bg-indigo-400 text-white py-2 rounded"
+            >
+              Login
+            </button>
+
+            {process.env.NODE_ENV === "development" && (
+              <button
+                type="button"
+                onClick={handleDevLogin}
+                className="w-full mt-3 bg-yellow-600 hover:bg-yellow-500 text-white py-2 rounded"
+              >
+                Dev Login
+              </button>
+            )}
+          </form>
+        )}
+      </div>
+    );
+  }
+
+  // Authenticated admin — sidebar layout
+  return (
+    <div className="flex min-h-screen bg-neutral-900 text-neutral-300">
+      <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+
+      <main className="flex-1 mt-12 px-8 py-12 overflow-auto">
+        {editingEvent && (
+          <EditEvent
+            event={editingEvent}
+            onEventUpdated={fetchEvents}
+            onClose={() => setEditingEvent(null)}
+          />
+        )}
+
+        {activeTab === "events" && (
+          <>
+            <h1 className="text-4xl font-bold mb-6">Events</h1>
+
+            {/* Admin Actions */}
+            <div className="flex gap-4 mb-8">
+              <AddEvent onEventAdded={fetchEvents} />
+              <Link
+                href="/verify"
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center gap-2"
+              >
+                Verify Tickets
+              </Link>
+            </div>
+
+            <EventsTable
+              events={events}
+              loading={loading}
+              onEdit={setEditingEvent}
+            />
+          </>
+        )}
+
+        {activeTab === "send-tickets" && <SendTickets />}
+
+        {activeTab === "purchase-analysis" && <PurchaseAnalysis />}
+      </main>
     </div>
   );
 }

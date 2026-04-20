@@ -128,9 +128,16 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
   };
 
   return (
-    <section className="bg-neutral-800 p-6 rounded-lg shadow-lg w-full my-4 max-w-4xl mx-auto">
-      <h2 className="text-xl font-bold mb-4 text-white">Edit Event</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <section
+        className="bg-neutral-800 p-6 rounded-lg shadow-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-bold mb-4 text-white">Edit Event</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
         {/* Two-column grid for the input fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Left Column: Event Title, Description, Location */}
@@ -284,7 +291,8 @@ export default function EditEvent({ event, onEventUpdated, onClose }) {
 
         {/* Success/Error Message */}
         {message && <p className="text-center mt-4 text-sm">{message}</p>}
-      </form>
-    </section>
+        </form>
+      </section>
+    </div>
   );
 }
