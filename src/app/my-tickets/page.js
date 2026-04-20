@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import TicketDetailModal from "@/components/TicketDetailModal";
 
 export default function MyTicketsPage() {
   const { user, loading: authLoading } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -128,79 +130,64 @@ export default function MyTicketsPage() {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tickets.map((ticket) => {
-            const handleSaveQR = () => {
-              // Create a link element to download the QR code
-              const link = document.createElement("a");
-              link.href = ticket.qr_code_data;
-              link.download = `ticket-${ticket.ticket_number}.png`;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            };
+          {tickets.map((ticket) => (
+            <div
+              key={ticket.id}
+              onClick={() => setSelectedTicket(ticket)}
+              className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-purple-700 transition-colors aspect-square flex flex-col cursor-pointer"
+            >
+              {/* Event Image */}
+              {ticket.events?.image && (
+                <div className="w-full basis-[70%] flex-shrink-0 sm:basis-auto sm:h-32">
+                  <img
+                    src={ticket.events.image}
+                    alt={ticket.events.event_title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
 
-            return (
-              <div
-                key={ticket.id}
-                className="bg-gray-900 rounded-lg overflow-hidden border border-gray-800 hover:border-purple-700 transition-colors aspect-square flex flex-col relative group"
-              >
-                {/* Event Image */}
-                {ticket.events?.image && (
-                  <div className="w-full h-32 flex-shrink-0">
-                    <img
-                      src={ticket.events.image}
-                      alt={ticket.events.event_title}
-                      className="w-full h-full object-cover"
-                    />
+              {/* Ticket Details */}
+              <div className="flex-1 p-4 flex flex-col min-h-0">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-bold line-clamp-2 flex-1">
+                    {ticket.events?.event_title || "Event"}
+                  </h3>
+                  {ticket.used ? (
+                    <span className="px-2 py-1 bg-gray-700 text-gray-400 rounded-full text-xs ml-2 flex-shrink-0">
+                      Used
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 bg-green-600 text-white rounded-full text-xs ml-2 flex-shrink-0">
+                      Valid
+                    </span>
+                  )}
+                </div>
+
+                {ticket.events && (
+                  <div className="text-gray-400 text-xs space-y-0.5 mb-3">
+                    <p className="truncate">Date: {ticket.events.date}</p>
+                    <p className="truncate">Time: {ticket.events.time}</p>
+                    <p className="truncate">
+                      Location: {ticket.events.location}
+                    </p>
                   </div>
                 )}
 
-                {/* Ticket Details */}
-                <div className="flex-1 p-4 flex flex-col">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-bold line-clamp-2 flex-1">
-                      {ticket.events?.event_title || "Event"}
-                    </h3>
-                    {ticket.used ? (
-                      <span className="px-2 py-1 bg-gray-700 text-gray-400 rounded-full text-xs ml-2 flex-shrink-0">
-                        Used
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 bg-green-600 text-white rounded-full text-xs ml-2 flex-shrink-0">
-                        Valid
-                      </span>
-                    )}
-                  </div>
-
-                  {ticket.events && (
-                    <div className="text-gray-400 text-xs space-y-0.5 mb-3">
-                      <p className="truncate">Date: {ticket.events.date}</p>
-                      <p className="truncate">Time: {ticket.events.time}</p>
-                      <p className="truncate">
-                        Location: {ticket.events.location}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="mt-auto pt-3 border-t border-gray-800 text-xs text-gray-500">
-                    <p className="truncate">#{ticket.ticket_number}</p>
-                    <p>{new Date(ticket.purchase_date).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                {/* Save Button - Shows on Hover */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <button
-                    onClick={handleSaveQR}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors shadow-lg"
-                  >
-                    Save
-                  </button>
+                <div className="mt-auto pt-3 border-t border-gray-800 text-xs text-gray-500">
+                  <p className="truncate">#{ticket.ticket_number}</p>
+                  <p>{new Date(ticket.purchase_date).toLocaleDateString()}</p>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
+
+        <TicketDetailModal
+          ticket={selectedTicket}
+          isOpen={!!selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+        />
       </div>
     </div>
   );
