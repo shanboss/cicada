@@ -107,20 +107,9 @@ const Navbar = () => {
             </Link>
           </li>
           {!user ? (
-            <>
-              <li>
-                <Link
-                  href="/signin"
-                  className="hover:text-gray-400 transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Sign In
-                </Link>
-              </li>
-              <li onClick={() => setIsOpen(false)}>
-                <PrimaryButton label={"Join Now"} link={"/signup"} />
-              </li>
-            </>
+            <li onClick={() => setIsOpen(false)}>
+              <PrimaryButton label={"Sign In"} link={"/signin"} />
+            </li>
           ) : (
             <li className="relative group">
               <Link
@@ -230,20 +219,9 @@ const Navbar = () => {
             </Link>
           </li>
           {!user ? (
-            <>
-              <li>
-                <Link
-                  href="/signin"
-                  className="hover:text-gray-400 transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Sign In
-                </Link>
-              </li>
-              <li onClick={() => setIsOpen(false)}>
-                <PrimaryButton label={"Join Now"} link={"/signup"} />
-              </li>
-            </>
+            <li onClick={() => setIsOpen(false)}>
+              <PrimaryButton label={"Sign In"} link={"/signin"} />
+            </li>
           ) : (
             <>
               <li>

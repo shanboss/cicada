@@ -80,21 +80,15 @@ export default function MyTicketsPage() {
         <div className="max-w-md w-full bg-gray-900 rounded-lg p-8 border border-purple-700 text-center">
           <h1 className="text-3xl font-bold mb-4">My Tickets</h1>
           <p className="text-gray-400 mb-8">
-            Please sign in or create an account to view your tickets. Tickets
-            purchased with your email will appear here.
+            Please sign in to view your tickets. Tickets purchased with your
+            email will appear here.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Link
               href="/signin"
               className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
             >
               Sign In
-            </Link>
-            <Link
-              href="/signup"
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
-            >
-              Create Account
             </Link>
           </div>
         </div>
