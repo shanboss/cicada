@@ -50,6 +50,15 @@ export default function PurchaseAnalysis() {
   const [selectedEvent, setSelectedEvent] = useState("all");
   const [grouping, setGrouping] = useState("daily");
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -105,7 +114,7 @@ export default function PurchaseAnalysis() {
       <h2 className="text-2xl font-bold mb-6">Purchase Analysis</h2>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-6 mb-6">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-6 mb-6">
         <div>
           <label
             htmlFor="event-filter"
@@ -165,7 +174,7 @@ export default function PurchaseAnalysis() {
         <p className="text-neutral-400">No purchase data available.</p>
       ) : (
         <div className="bg-neutral-800 p-4 rounded-lg">
-          <ResponsiveContainer width="100%" height={350}>
+          <ResponsiveContainer width="100%" height={isMobile ? 250 : 350}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#525252" />
               <XAxis

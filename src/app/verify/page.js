@@ -13,21 +13,27 @@ export default function VerifyTicketPage() {
   const [manualEntry, setManualEntry] = useState("");
   const [emailLookup, setEmailLookup] = useState("");
   const [emailResults, setEmailResults] = useState(null);
-  const [scanHistory, setScanHistory] = useState([]);
   const [cameraError, setCameraError] = useState(null);
-  const [currentScanStatus, setCurrentScanStatus] = useState(null); // 'valid', 'used', or null
+  const [paused, setPaused] = useState(false);
   const scannerRef = useRef(null);
 
   const startScanner = () => {
     setScanning(true);
     setVerificationResult(null);
     setCameraError(null);
-    setCurrentScanStatus(null);
+    setPaused(false);
   };
 
-  const resetScanStatus = () => {
-    setCurrentScanStatus(null);
+  const handleNext = () => {
     setVerificationResult(null);
+    setPaused(false);
+    if (scannerRef.current) {
+      try {
+        scannerRef.current.resume();
+      } catch (e) {
+        console.error("Error resuming scanner:", e);
+      }
+    }
   };
 
   // Initialize scanner when scanning state becomes true and element is available
@@ -80,8 +86,6 @@ export default function VerifyTicketPage() {
           if (backCamera) {
             selectedCameraId = backCamera.id;
           } else if (devices.length > 0) {
-            // Fallback: try to find environment-facing camera
-            // On some devices, back camera might be labeled differently
             const envCamera = devices.find(
               (device) =>
                 device.label &&
@@ -114,25 +118,30 @@ export default function VerifyTicketPage() {
           cameraIdOrConfig,
           config,
           (decodedText) => {
-            // Keep scanner running - don't stop it
             setCameraError(null);
+
+            // Pause scanner immediately
+            try {
+              html5QrCode.pause();
+            } catch (e) {
+              console.error("Error pausing scanner:", e);
+            }
+            setPaused(true);
 
             // Handle both ticket number and JSON format
             let ticketNumber = decodedText;
             try {
-              // Try to parse as JSON first (in case QR contains JSON)
               const parsed = JSON.parse(decodedText);
               if (parsed.ticketNumber) {
                 ticketNumber = parsed.ticketNumber;
               }
             } catch (e) {
-              // Not JSON, use as-is (should be ticket number)
+              // Not JSON, use as-is
             }
 
             verifyTicket(ticketNumber);
           },
           (errorMessage) => {
-            // Handle camera permission errors
             if (errorMessage && typeof errorMessage === "string") {
               if (
                 errorMessage.includes("Permission") ||
@@ -152,7 +161,6 @@ export default function VerifyTicketPage() {
                 !errorMessage.includes("NotFoundException") &&
                 !errorMessage.includes("No QR code found")
               ) {
-                // Only log meaningful errors, ignore common scanning errors
                 console.error("Scanner error:", errorMessage);
               }
             }
@@ -168,11 +176,10 @@ export default function VerifyTicketPage() {
         );
         setScanning(false);
       }
-    }, 150); // Small delay to ensure DOM is updated
+    }, 150);
 
     return () => {
       clearTimeout(timer);
-      // Clean up scanner on unmount or when scanning changes
       if (scannerRef.current) {
         scannerRef.current
           .stop()
@@ -197,16 +204,22 @@ export default function VerifyTicketPage() {
           scannerRef.current = null;
           setScanning(false);
           setCameraError(null);
+          setPaused(false);
+          setVerificationResult(null);
         })
         .catch((err) => {
           console.error("Error stopping scanner:", err);
           scannerRef.current = null;
           setScanning(false);
           setCameraError(null);
+          setPaused(false);
+          setVerificationResult(null);
         });
     } else {
       setScanning(false);
       setCameraError(null);
+      setPaused(false);
+      setVerificationResult(null);
     }
   };
 
@@ -220,34 +233,12 @@ export default function VerifyTicketPage() {
 
       const result = await response.json();
       setVerificationResult(result);
-
-      // Set scan status for overlay
-      if (result.valid && !result.alreadyUsed) {
-        setCurrentScanStatus("valid");
-      } else if (result.alreadyUsed) {
-        setCurrentScanStatus("used");
-      } else {
-        setCurrentScanStatus(null);
-      }
-
-      // Add to scan history
-      setScanHistory((prev) => [
-        {
-          ticketNumber,
-          result,
-          customerName: result.ticket?.customer_name || "N/A",
-          eventName: result.ticket?.event?.event_title || "N/A",
-          timestamp: new Date().toISOString(),
-        },
-        ...prev.slice(0, 9), // Keep last 10 scans
-      ]);
     } catch (error) {
       console.error("Error verifying ticket:", error);
       setVerificationResult({
         valid: false,
         error: "Failed to verify ticket",
       });
-      setCurrentScanStatus(null);
     }
   };
 
@@ -267,7 +258,6 @@ export default function VerifyTicketPage() {
           ticket: { ...verificationResult.ticket, used: true },
           justMarkedUsed: true,
         });
-        setCurrentScanStatus("used");
       }
     } catch (error) {
       console.error("Error marking ticket as used:", error);
@@ -321,7 +311,6 @@ export default function VerifyTicketPage() {
 
   const selectTicketFromEmail = async (ticket) => {
     try {
-      // Mark ticket as used immediately
       const response = await fetch("/api/verify-ticket", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -329,7 +318,6 @@ export default function VerifyTicketPage() {
       });
 
       if (response.ok) {
-        // Update the email results to show this ticket as used
         setEmailResults({
           ...emailResults,
           tickets: emailResults.tickets.map((t) =>
@@ -338,18 +326,6 @@ export default function VerifyTicketPage() {
               : t
           ),
         });
-
-        // Add to scan history
-        setScanHistory((prev) => [
-          {
-            ticketNumber: ticket.ticket_number,
-            result: { valid: true, ticket },
-            customerName: ticket.customer_name || "N/A",
-            eventName: ticket.events?.event_title || "N/A",
-            timestamp: new Date().toISOString(),
-          },
-          ...prev.slice(0, 9),
-        ]);
       }
     } catch (error) {
       console.error("Error checking in ticket:", error);
@@ -386,6 +362,76 @@ export default function VerifyTicketPage() {
       </div>
     );
   }
+
+  // Build the overlay content based on verification result
+  const renderOverlay = () => {
+    if (!paused || !verificationResult) return null;
+
+    const isValid = verificationResult.valid && !verificationResult.alreadyUsed;
+    const isUsed = verificationResult.alreadyUsed;
+
+    let bgColor, borderColor, icon, title, subtitle;
+
+    if (isValid) {
+      bgColor = "bg-green-900/90";
+      borderColor = "border-green-500";
+      icon = "✅";
+      title = verificationResult.justMarkedUsed ? "Checked In!" : "Valid Ticket";
+      subtitle = verificationResult.justMarkedUsed
+        ? "Successfully checked in"
+        : "Ready for check-in";
+    } else if (isUsed) {
+      bgColor = "bg-yellow-900/90";
+      borderColor = "border-yellow-500";
+      icon = "⚠️";
+      title = "Already Used";
+      subtitle = `Checked in ${new Date(verificationResult.usedDate).toLocaleString()}`;
+    } else {
+      bgColor = "bg-red-900/90";
+      borderColor = "border-red-500";
+      icon = "❌";
+      title = "Invalid Ticket";
+      subtitle = verificationResult.error || "Ticket not found";
+    }
+
+    return (
+      <div
+        className={`absolute inset-0 z-20 ${bgColor} backdrop-blur-sm flex flex-col items-center justify-center p-4 rounded-lg border-2 ${borderColor}`}
+      >
+        <div className="text-4xl md:text-5xl mb-3">{icon}</div>
+        <h3 className="text-xl md:text-2xl font-bold text-white mb-1">
+          {title}
+        </h3>
+        <p className="text-sm text-gray-300 mb-4 text-center">{subtitle}</p>
+
+        {/* Ticket details */}
+        {verificationResult.ticket && (
+          <div className="w-full max-w-xs space-y-1 mb-4 text-center">
+            {verificationResult.ticket.event && (
+              <p className="text-sm font-semibold text-white truncate">
+                {verificationResult.ticket.event.event_title}
+              </p>
+            )}
+            <p className="text-xs text-gray-300 truncate">
+              {verificationResult.ticket.customer_name || "N/A"} &middot;{" "}
+              {verificationResult.ticket.customer_email}
+            </p>
+          </div>
+        )}
+
+        <button
+          onClick={isValid && !verificationResult.justMarkedUsed ? async () => { await markAsUsed(); handleNext(); } : handleNext}
+          className={`w-full max-w-xs px-6 py-3 rounded-lg transition-colors text-base font-semibold text-white ${
+            isValid && !verificationResult.justMarkedUsed
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-purple-600 hover:bg-purple-700"
+          }`}
+        >
+          {isValid && !verificationResult.justMarkedUsed ? "Check In & Next" : "Next"}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-black text-white py-8 md:py-20 px-4">
@@ -427,54 +473,8 @@ export default function VerifyTicketPage() {
                   className="overflow-hidden rounded-lg"
                 ></div>
 
-                {/* Status Overlay - Top Right */}
-                {currentScanStatus === "valid" && (
-                  <div className="absolute top-2 right-2 bg-green-500 rounded-full p-2 shadow-lg z-10 animate-pulse">
-                    <svg
-                      className="w-6 h-6 md:w-8 md:h-8 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                )}
-
-                {currentScanStatus === "used" && (
-                  <div className="absolute top-2 right-2 bg-yellow-500 rounded-full p-2 shadow-lg z-10 animate-pulse">
-                    <svg
-                      className="w-6 h-6 md:w-8 md:h-8 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
-                  </div>
-                )}
-
-                {/* Next Ticket Button - Bottom */}
-                {currentScanStatus && (
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-10">
-                    <button
-                      onClick={resetScanStatus}
-                      className="px-4 md:px-6 py-2 md:py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm md:text-base font-semibold shadow-lg"
-                    >
-                      Next Ticket
-                    </button>
-                  </div>
-                )}
+                {/* Result Overlay */}
+                {renderOverlay()}
               </div>
 
               {cameraError && (
@@ -645,8 +645,8 @@ export default function VerifyTicketPage() {
           </div>
         )}
 
-        {/* Verification Result */}
-        {verificationResult && (
+        {/* Verification Result (for manual entry / non-scanner results) */}
+        {verificationResult && !scanning && (
           <div
             className={`bg-gray-900 rounded-lg p-4 md:p-6 mb-6 border-2 ${
               verificationResult.valid && !verificationResult.alreadyUsed
@@ -655,19 +655,16 @@ export default function VerifyTicketPage() {
             }`}
           >
             {verificationResult.valid && !verificationResult.alreadyUsed ? (
-              // Valid Ticket
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="text-2xl md:text-4xl">✅</div>
-                    <div>
-                      <h3 className="text-xl md:text-2xl font-bold text-green-400">
-                        Valid Ticket
-                      </h3>
-                      <p className="text-gray-400 text-xs md:text-sm">
-                        Ready for check-in
-                      </p>
-                    </div>
+                <div className="flex items-center gap-2 md:gap-3 mb-4">
+                  <div className="text-2xl md:text-4xl">✅</div>
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-bold text-green-400">
+                      Valid Ticket
+                    </h3>
+                    <p className="text-gray-400 text-xs md:text-sm">
+                      Ready for check-in
+                    </p>
                   </div>
                 </div>
 
@@ -711,18 +708,17 @@ export default function VerifyTicketPage() {
                     onClick={markAsUsed}
                     className="w-full px-4 md:px-6 py-3 md:py-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors text-base md:text-lg font-semibold"
                   >
-                    ✓ Check In (Mark as Used)
+                    Check In (Mark as Used)
                   </button>
                 ) : (
                   <div className="bg-green-900 bg-opacity-30 border border-green-700 rounded-lg p-3 md:p-4 text-center">
                     <p className="text-green-400 font-semibold text-sm md:text-base">
-                      ✓ Checked In Successfully!
+                      Checked In Successfully!
                     </p>
                   </div>
                 )}
               </div>
             ) : verificationResult.alreadyUsed ? (
-              // Already Used
               <div>
                 <div className="flex items-center gap-2 md:gap-3 mb-4">
                   <div className="text-2xl md:text-4xl">⚠️</div>
@@ -753,7 +749,6 @@ export default function VerifyTicketPage() {
                 </div>
               </div>
             ) : (
-              // Invalid
               <div>
                 <div className="flex items-center gap-2 md:gap-3 mb-4">
                   <div className="text-2xl md:text-4xl">❌</div>
@@ -768,64 +763,6 @@ export default function VerifyTicketPage() {
                 </div>
               </div>
             )}
-
-            <button
-              onClick={() => {
-                setVerificationResult(null);
-                setCurrentScanStatus(null);
-                startScanner();
-              }}
-              className="w-full mt-4 px-4 md:px-6 py-2.5 md:py-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm md:text-base"
-            >
-              Scan Another Ticket
-            </button>
-          </div>
-        )}
-
-        {/* Scan History */}
-        {scanHistory.length > 0 && (
-          <div className="bg-gray-900 rounded-lg p-4 md:p-6 border border-gray-800">
-            <h2 className="text-lg md:text-xl font-semibold mb-4">
-              Recent Scans
-            </h2>
-            <div className="space-y-2">
-              {scanHistory.map((scan, index) => (
-                <div
-                  key={index}
-                  className="bg-black rounded p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm md:text-base font-semibold text-white mb-1 break-words">
-                      {scan.eventName}
-                    </p>
-                    <p className="font-mono text-xs md:text-sm break-all">
-                      {scan.ticketNumber}
-                    </p>
-                    <p className="text-xs md:text-sm text-gray-300 mt-1 break-words">
-                      {scan.customerName}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(scan.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
-                  <div
-                    className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap ${
-                      scan.result.valid && !scan.result.alreadyUsed
-                        ? "bg-green-900 text-green-300"
-                        : scan.result.alreadyUsed
-                        ? "bg-yellow-900 text-yellow-300"
-                        : "bg-red-900 text-red-300"
-                    }`}
-                  >
-                    {scan.result.valid && !scan.result.alreadyUsed
-                      ? "Valid"
-                      : scan.result.alreadyUsed
-                      ? "Used"
-                      : "Invalid"}
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </div>

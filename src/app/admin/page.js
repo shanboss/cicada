@@ -170,7 +170,7 @@ export default function AdminDashboard() {
     <div className="flex min-h-screen bg-neutral-900 text-neutral-300">
       <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="flex-1 mt-12 px-8 py-12 overflow-auto">
+      <main className="flex-1 mt-12 px-4 md:px-8 py-8 md:py-12 pb-20 md:pb-12 overflow-auto">
         {editingEvent && (
           <EditEvent
             event={editingEvent}
@@ -181,14 +181,14 @@ export default function AdminDashboard() {
 
         {activeTab === "events" && (
           <>
-            <h1 className="text-4xl font-bold mb-6">Events</h1>
+            <h1 className="text-2xl md:text-4xl font-bold mb-6">Events</h1>
 
             {/* Admin Actions */}
-            <div className="flex gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <AddEvent onEventAdded={fetchEvents} />
               <Link
                 href="/verify"
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center gap-2"
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold flex items-center justify-center gap-2"
               >
                 Verify Tickets
               </Link>
