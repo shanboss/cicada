@@ -174,6 +174,9 @@ function SuccessPageContent() {
                         />
                       </div>
                       <p className="text-xs text-gray-400 text-center">{ticket.ticket_number}</p>
+                      {ticket.ticket_type && (
+                        <p className="text-xs text-purple-400 text-center mt-1">{ticket.ticket_type}</p>
+                      )}
                     </div>
                   ))}
                 </div>

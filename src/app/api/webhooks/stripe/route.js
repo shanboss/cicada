@@ -183,6 +183,9 @@ async function handleCheckoutSessionCompleted(session) {
       }
     }
 
+    // Read ticket type from metadata (if set)
+    const ticketType = session.metadata?.ticket_type || null;
+
     // Create multiple tickets based on quantity
     const ticketsToCreate = [];
     const qrCodes = [];
@@ -199,9 +202,10 @@ async function handleCheckoutSessionCompleted(session) {
         stripe_session_id: session.id,
         stripe_payment_intent: session.payment_intent,
         qr_code_data: qrCodeDataUrl,
+        ...(ticketType ? { ticket_type: ticketType } : {}),
       });
 
-      qrCodes.push({ ticketNumber, qrCodeDataUrl });
+      qrCodes.push({ ticketNumber, qrCodeDataUrl, ticketType });
     }
 
     // Insert all tickets at once

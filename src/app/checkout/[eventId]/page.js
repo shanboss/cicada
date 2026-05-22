@@ -16,6 +16,8 @@ export default function CheckoutPage() {
   const [quantity, setQuantity] = useState(1);
   const [processing, setProcessing] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [tiers, setTiers] = useState([]);
+  const [selectedTierIndex, setSelectedTierIndex] = useState(0);
 
   useEffect(() => {
     fetchEvent();
@@ -31,12 +33,28 @@ export default function CheckoutPage() {
 
       if (error) throw error;
 
-      if (!data.stripe_price_id) {
+      // Determine tiers: use ticket_tiers if available, fallback to legacy fields
+      let eventTiers = [];
+      if (data.ticket_tiers && Array.isArray(data.ticket_tiers) && data.ticket_tiers.length > 0) {
+        eventTiers = data.ticket_tiers;
+      } else if (data.stripe_price_id) {
+        eventTiers = [
+          {
+            label: "General Admission",
+            stripe_price_id: data.stripe_price_id,
+            price: data.ticket_price || 0,
+          },
+        ];
+      }
+
+      if (eventTiers.length === 0) {
         alert("This event is not available for purchase");
         router.push("/events");
         return;
       }
 
+      setTiers(eventTiers);
+      setSelectedTierIndex(0);
       setEvent(data);
     } catch (error) {
       console.error("Error fetching event:", error);
@@ -52,16 +70,18 @@ export default function CheckoutPage() {
   };
 
   const handleCheckout = async () => {
-    if (!event?.stripe_price_id) return;
+    const selectedTier = tiers[selectedTierIndex];
+    if (!selectedTier?.stripe_price_id) return;
 
     try {
       setProcessing(true);
 
       const checkoutUrl = await createStandardCheckout({
-        priceId: event.stripe_price_id,
+        priceId: selectedTier.stripe_price_id,
         eventId: String(event.id), // event.id is UUID (string)
         eventTitle: event.event_title,
         quantity: quantity,
+        ticketType: selectedTier.label,
       });
 
       window.location.href = checkoutUrl;
@@ -84,8 +104,9 @@ export default function CheckoutPage() {
     return null;
   }
 
-  // Get price from event data, fallback to 0 if not set
-  const pricePerTicket = event.ticket_price || 0;
+  // Get price from selected tier
+  const selectedTier = tiers[selectedTierIndex] || {};
+  const pricePerTicket = selectedTier.price || 0;
   const subtotal = pricePerTicket * quantity;
   const tax = subtotal * 0; // Add tax if needed
   const total = subtotal + tax;
@@ -162,6 +183,25 @@ export default function CheckoutPage() {
                 )}
               </div>
             </div>
+
+            {/* Ticket Type Selector (only if 2+ tiers) */}
+            {tiers.length > 1 && (
+              <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+                <h3 className="text-lg font-semibold mb-4">Select Ticket Type</h3>
+                <select
+                  value={selectedTierIndex}
+                  onChange={(e) => setSelectedTierIndex(Number(e.target.value))}
+                  disabled={processing}
+                  className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"
+                >
+                  {tiers.map((tier, index) => (
+                    <option key={index} value={index}>
+                      {tier.label} — ${Number(tier.price).toFixed(2)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Quantity Selector */}
             <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">

@@ -144,9 +144,14 @@ export default function MyTicketsPage() {
               {/* Ticket Details */}
               <div className="flex-1 p-4 flex flex-col min-h-0">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold line-clamp-2 flex-1">
-                    {ticket.events?.event_title || "Event"}
-                  </h3>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold line-clamp-2">
+                      {ticket.events?.event_title || "Event"}
+                    </h3>
+                    {ticket.ticket_type && (
+                      <p className="text-xs text-purple-400 mt-0.5">{ticket.ticket_type}</p>
+                    )}
+                  </div>
                   {ticket.used ? (
                     <span className="px-2 py-1 bg-gray-700 text-gray-400 rounded-full text-xs ml-2 flex-shrink-0">
                       Used

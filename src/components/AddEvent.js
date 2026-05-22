@@ -10,9 +10,10 @@ export default function AddEvent({ onEventAdded }) {
     date: "",
     location: "",
     time: "",
-    stripe_price_id: "",
-    ticket_price: "",
   });
+  const [ticketTiers, setTicketTiers] = useState([
+    { label: "", stripe_price_id: "", price: "" },
+  ]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isOpen, setIsOpen] = useState(false); // Modal state
@@ -37,12 +38,17 @@ export default function AddEvent({ onEventAdded }) {
     setLoading(true);
     setMessage("");
 
-    const { event_title, desc, date, location, time, stripe_price_id, ticket_price } = formData;
+    const { event_title, desc, date, location, time } = formData;
     if (!event_title || !desc || !date || !location || !time) {
       setMessage("❌ All fields are required!");
       setLoading(false);
       return;
     }
+
+    // Filter out empty tiers
+    const validTiers = ticketTiers.filter(
+      (t) => t.label && t.stripe_price_id && t.price
+    );
 
     let image = "";
     if (file) {
@@ -92,18 +98,27 @@ export default function AddEvent({ onEventAdded }) {
 
     try {
       // Insert the event record with the image URL
+      // Serialize tiers with numeric prices
+      const serializedTiers = validTiers.map((t) => ({
+        label: t.label,
+        stripe_price_id: t.stripe_price_id,
+        price: parseFloat(t.price),
+      }));
+
       const { error } = await supabase
         .from("events")
         .insert([
-          { 
-            event_title, 
-            desc, 
-            date, 
-            time, 
-            location, 
-            image, 
-            stripe_price_id,
-            ticket_price: ticket_price ? parseFloat(ticket_price) : null,
+          {
+            event_title,
+            desc,
+            date,
+            time,
+            location,
+            image,
+            ticket_tiers: serializedTiers,
+            // Backward compat: set top-level fields from first tier
+            stripe_price_id: serializedTiers[0]?.stripe_price_id || null,
+            ticket_price: serializedTiers[0]?.price || null,
           },
         ]);
 
@@ -117,9 +132,8 @@ export default function AddEvent({ onEventAdded }) {
           date: "",
           location: "",
           time: "",
-          stripe_price_id: "",
-          ticket_price: "",
         });
+        setTicketTiers([{ label: "", stripe_price_id: "", price: "" }]);
         setFile(null); // Reset file input
         setTimeout(() => {
           setMessage("");
@@ -224,36 +238,66 @@ export default function AddEvent({ onEventAdded }) {
                 />
               </div>
 
-              {/* Stripe Price ID */}
+              {/* Ticket Tiers */}
               <div>
-                <label className="block text-sm font-medium text-neutral-300">
-                  Stripe Price ID
+                <label className="block text-sm font-medium text-neutral-300 mb-2">
+                  Ticket Tiers
                 </label>
-                <input
-                  name="stripe_price_id"
-                  type="text"
-                  value={formData.stripe_price_id}
-                  onChange={handleChange}
-                  placeholder="price_..."
-                  className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                />
-              </div>
-
-              {/* Ticket Price */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-300">
-                  Ticket Price
-                </label>
-                <input
-                  name="ticket_price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.ticket_price}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  className="block w-full rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                />
+                {ticketTiers.map((tier, index) => (
+                  <div key={index} className="flex gap-2 mb-2 items-start">
+                    <input
+                      type="text"
+                      value={tier.label}
+                      onChange={(e) => {
+                        const updated = [...ticketTiers];
+                        updated[index] = { ...updated[index], label: e.target.value };
+                        setTicketTiers(updated);
+                      }}
+                      placeholder="Label (e.g. GA)"
+                      className="flex-1 rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                    />
+                    <input
+                      type="text"
+                      value={tier.stripe_price_id}
+                      onChange={(e) => {
+                        const updated = [...ticketTiers];
+                        updated[index] = { ...updated[index], stripe_price_id: e.target.value };
+                        setTicketTiers(updated);
+                      }}
+                      placeholder="price_..."
+                      className="flex-1 rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={tier.price}
+                      onChange={(e) => {
+                        const updated = [...ticketTiers];
+                        updated[index] = { ...updated[index], price: e.target.value };
+                        setTicketTiers(updated);
+                      }}
+                      placeholder="0.00"
+                      className="w-24 rounded-md bg-neutral-700 px-3 py-2 text-white border border-neutral-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                    />
+                    {ticketTiers.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setTicketTiers(ticketTiers.filter((_, i) => i !== index))}
+                        className="px-2 py-2 text-red-400 hover:text-red-300 text-sm"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setTicketTiers([...ticketTiers, { label: "", stripe_price_id: "", price: "" }])}
+                  className="text-sm text-indigo-400 hover:text-indigo-300 mt-1"
+                >
+                  + Add Ticket Tier
+                </button>
               </div>
 
               {/* Upload Image */}
