@@ -202,7 +202,7 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {activeTab === "send-tickets" && <SendTickets />}
+        {activeTab === "send-tickets" && <SendTickets events={events} />}
 
         {activeTab === "purchase-analysis" && <PurchaseAnalysis />}
       </main>

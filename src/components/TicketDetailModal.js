@@ -81,6 +81,15 @@ export default function TicketDetailModal({ ticket, isOpen, onClose }) {
             )}
           </div>
 
+          {/* Ticket Type Badge */}
+          {ticket.ticket_type && (
+            <div className="mb-4 flex justify-center">
+              <span className="px-5 py-2 bg-purple-700 text-white font-bold text-lg rounded-lg tracking-wide uppercase">
+                {ticket.ticket_type}
+              </span>
+            </div>
+          )}
+
           {/* Event details */}
           {ticket.events && (
             <div className="text-gray-400 text-sm space-y-1 mb-6">

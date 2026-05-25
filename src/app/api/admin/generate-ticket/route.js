@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request) {
   try {
-    const { email, customerName } = await request.json();
+    const { email, customerName, eventId, ticketType } = await request.json();
 
     if (!email) {
       return NextResponse.json(
@@ -33,15 +33,24 @@ export async function POST(request) {
     const ticketNumber = generateTicketNumber();
     const qrCodeDataUrl = await generateQRCode(ticketNumber);
 
-    // Get the next upcoming event (optional - can be null for admin-created tickets)
-    const { data: events } = await supabaseAdmin
-      .from("events")
-      .select("*")
-      .gte("date", new Date().toISOString().split("T")[0])
-      .order("date", { ascending: true })
-      .limit(1);
-
-    const event = events?.[0] || null;
+    // Use specified event, or fall back to next upcoming event
+    let event = null;
+    if (eventId) {
+      const { data } = await supabaseAdmin
+        .from("events")
+        .select("*")
+        .eq("id", eventId)
+        .single();
+      event = data || null;
+    } else {
+      const { data: events } = await supabaseAdmin
+        .from("events")
+        .select("*")
+        .gte("date", new Date().toISOString().split("T")[0])
+        .order("date", { ascending: true })
+        .limit(1);
+      event = events?.[0] || null;
+    }
 
     // Create ticket in database
     const ticketData = {
@@ -52,6 +61,7 @@ export async function POST(request) {
       stripe_session_id: "admin-created", // Special identifier for admin-created tickets
       stripe_payment_intent: null,
       qr_code_data: qrCodeDataUrl,
+      ...(ticketType ? { ticket_type: ticketType } : {}),
     };
 
     const { data: ticket, error: ticketError } = await supabaseAdmin
@@ -88,6 +98,7 @@ export async function POST(request) {
           {
             ticketNumber: ticketNumber,
             qrCodeDataUrl: qrCodeDataUrl,
+            ticketType: ticketType || null,
           },
         ],
         eventDetails: eventDetails,
@@ -107,6 +118,7 @@ export async function POST(request) {
       customer_name: ticket.customer_name,
       qr_code_data: ticket.qr_code_data,
       event_id: ticket.event_id,
+      ticket_type: ticket.ticket_type || null,
     });
   } catch (error) {
     console.error("Error in admin generate ticket:", error);

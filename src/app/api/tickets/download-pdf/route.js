@@ -24,6 +24,7 @@ export async function POST(request) {
         ticket_number,
         qr_code_data,
         customer_name,
+        ticket_type,
         events (
           event_title,
           date,
@@ -56,6 +57,7 @@ export async function POST(request) {
       qrCodeDataUrl: ticket.qr_code_data,
       eventDetails,
       customerName: ticket.customer_name,
+      ticketType: ticket.ticket_type,
     });
 
     const filename = eventDetails?.event_title

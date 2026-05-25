@@ -1,14 +1,52 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function SendTickets() {
+export default function SendTickets({ events = [] }) {
   const [email, setEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState("");
+  const [selectedTierIndex, setSelectedTierIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [ticketData, setTicketData] = useState(null);
+
+  // Default to the latest event (first in list, already sorted by date desc)
+  useEffect(() => {
+    if (events.length > 0 && !selectedEventId) {
+      setSelectedEventId(events[0].id);
+    }
+  }, [events]);
+
+  const selectedEvent = events.find((e) => e.id === selectedEventId) || null;
+
+  // Build tiers for the selected event
+  const tiers = (() => {
+    if (!selectedEvent) return [];
+    if (
+      selectedEvent.ticket_tiers &&
+      Array.isArray(selectedEvent.ticket_tiers) &&
+      selectedEvent.ticket_tiers.length > 0
+    ) {
+      return selectedEvent.ticket_tiers;
+    }
+    if (selectedEvent.stripe_price_id || selectedEvent.ticket_price) {
+      return [
+        {
+          label: "General Admission",
+          stripe_price_id: selectedEvent.stripe_price_id,
+          price: selectedEvent.ticket_price || 0,
+        },
+      ];
+    }
+    return [];
+  })();
+
+  // Reset tier selection when event changes
+  useEffect(() => {
+    setSelectedTierIndex(0);
+  }, [selectedEventId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,6 +54,8 @@ export default function SendTickets() {
     setError("");
     setSuccess(false);
     setTicketData(null);
+
+    const ticketType = tiers[selectedTierIndex]?.label || null;
 
     try {
       const response = await fetch("/api/admin/generate-ticket", {
@@ -26,6 +66,8 @@ export default function SendTickets() {
         body: JSON.stringify({
           email,
           customerName: customerName || null,
+          eventId: selectedEventId || null,
+          ticketType,
         }),
       });
 
@@ -58,6 +100,63 @@ export default function SendTickets() {
         onSubmit={handleSubmit}
         className="bg-neutral-800 p-6 rounded-lg shadow-md mb-6"
       >
+        {/* Event Selection */}
+        <div className="mb-4">
+          <label
+            htmlFor="send-event"
+            className="block text-sm font-medium text-neutral-400 mb-2"
+          >
+            Event *
+          </label>
+          <select
+            id="send-event"
+            value={selectedEventId}
+            onChange={(e) => setSelectedEventId(e.target.value)}
+            className="w-full p-2 bg-neutral-700 rounded text-white"
+            required
+          >
+            {events.length === 0 && (
+              <option value="">No events available</option>
+            )}
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.event_title} — {ev.date}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Ticket Tier Selection (only if 2+ tiers) */}
+        {tiers.length > 1 && (
+          <div className="mb-4">
+            <label
+              htmlFor="send-tier"
+              className="block text-sm font-medium text-neutral-400 mb-2"
+            >
+              Ticket Type *
+            </label>
+            <select
+              id="send-tier"
+              value={selectedTierIndex}
+              onChange={(e) => setSelectedTierIndex(Number(e.target.value))}
+              className="w-full p-2 bg-neutral-700 rounded text-white"
+            >
+              {tiers.map((tier, index) => (
+                <option key={index} value={index}>
+                  {tier.label} — ${Number(tier.price).toFixed(2)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Show single tier as info text */}
+        {tiers.length === 1 && tiers[0].label && (
+          <div className="mb-4 p-3 bg-neutral-700/50 rounded text-neutral-300 text-sm">
+            Ticket type: <strong>{tiers[0].label}</strong>
+          </div>
+        )}
+
         <div className="mb-4">
           <label
             htmlFor="send-email"
@@ -101,7 +200,7 @@ export default function SendTickets() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || events.length === 0}
           className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white py-2 rounded font-semibold"
         >
           {loading ? "Generating..." : "Generate QR Code"}
@@ -125,6 +224,14 @@ export default function SendTickets() {
             {ticketData.customer_name && (
               <p className="text-neutral-400">
                 <strong>Customer Name:</strong> {ticketData.customer_name}
+              </p>
+            )}
+            {ticketData.ticket_type && (
+              <p className="text-neutral-400">
+                <strong>Ticket Type:</strong>{" "}
+                <span className="text-purple-400 font-semibold">
+                  {ticketData.ticket_type}
+                </span>
               </p>
             )}
           </div>
