@@ -13,6 +13,7 @@
 # testing
 /coverage
 /src/app/test
+/src/app/api/test-pdf
 # next.js
 /.next/
 /out/
