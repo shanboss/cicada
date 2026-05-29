@@ -48,8 +48,9 @@ export async function createCheckoutSession({ priceId, eventId, eventTitle }) {
  * @param {string} params.eventTitle - Event title for display
  * @param {number} params.quantity - Number of tickets to purchase (default: 1)
  * @param {string} [params.ticketType] - Ticket tier label (e.g. "General Admission")
+ * @param {boolean} [params.emailOptIn] - Whether user opted in to promotional emails
  */
-export async function createStandardCheckout({ priceId, eventId, eventTitle, quantity = 1, ticketType }) {
+export async function createStandardCheckout({ priceId, eventId, eventTitle, quantity = 1, ticketType, emailOptIn }) {
   const origin = (await headers()).get("origin");
 
   try {
@@ -68,6 +69,7 @@ export async function createStandardCheckout({ priceId, eventId, eventTitle, qua
         event_title: eventTitle,
         quantity: quantity.toString(),
         ...(ticketType ? { ticket_type: ticketType } : {}),
+        email_opt_in: emailOptIn ? "true" : "false",
       },
       // Branding options (also configure in Stripe Dashboard > Settings > Branding)
       payment_method_types: ["card"],

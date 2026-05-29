@@ -6,6 +6,7 @@ import EditEvent from "@/components/EditEvent";
 import AdminSidebar from "@/components/AdminSidebar";
 import SendTickets from "@/components/SendTickets";
 import PurchaseAnalysis from "@/components/PurchaseAnalysis";
+import BroadcastEmail from "@/components/BroadcastEmail";
 import EventsTable from "@/components/EventsTable";
 import { supabase } from "../../../lib/supabaseClient";
 import Link from "next/link";
@@ -205,6 +206,8 @@ export default function AdminDashboard() {
         {activeTab === "send-tickets" && <SendTickets events={events} />}
 
         {activeTab === "purchase-analysis" && <PurchaseAnalysis />}
+
+        {activeTab === "email-blast" && <BroadcastEmail events={events} />}
       </main>
     </div>
   );

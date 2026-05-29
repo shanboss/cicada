@@ -19,6 +19,7 @@ export default function CheckoutPage() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [tiers, setTiers] = useState([]);
   const [selectedTierIndex, setSelectedTierIndex] = useState(0);
+  const [emailOptIn, setEmailOptIn] = useState(true);
 
   useEffect(() => {
     fetchEvent();
@@ -83,6 +84,7 @@ export default function CheckoutPage() {
         eventTitle: event.event_title,
         quantity: quantity,
         ticketType: selectedTier.label,
+        emailOptIn,
       });
 
       window.location.href = checkoutUrl;
@@ -287,6 +289,19 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
+
+            <label className="flex items-center gap-3 cursor-pointer px-1">
+              <input
+                type="checkbox"
+                checked={emailOptIn}
+                onChange={(e) => setEmailOptIn(e.target.checked)}
+                disabled={processing}
+                className="w-5 h-5 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer"
+              />
+              <span className="text-sm text-gray-300">
+                Send me emails about upcoming Cicada events
+              </span>
+            </label>
 
             <p className="text-sm text-gray-500 text-center">
               You will be redirected to Stripe for secure payment

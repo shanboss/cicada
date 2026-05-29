@@ -225,6 +225,54 @@ async function handleCheckoutSessionCompleted(session) {
     console.log("🎫 Ticket IDs:", tickets.map(t => t.id));
     console.log("🎫 Ticket Numbers:", tickets.map(t => t.ticket_number));
 
+    // Save email subscription preference
+    const emailOptIn = session.metadata?.email_opt_in;
+    if (emailOptIn && customerEmail) {
+      try {
+        if (emailOptIn === "true") {
+          // Upsert: insert if new, but don't re-subscribe someone who previously unsubscribed
+          const { error: subError } = await supabaseAdmin
+            .from("email_subscribers")
+            .upsert(
+              {
+                email: customerEmail,
+                name: customerName,
+                subscribed: true,
+                source: "checkout",
+                updated_at: new Date().toISOString(),
+              },
+              {
+                onConflict: "email",
+                ignoreDuplicates: true, // Don't update if row already exists
+              }
+            );
+          if (subError) console.error("Error saving email subscription:", subError);
+          else console.log("✅ Email subscription saved for:", customerEmail);
+        } else {
+          // User explicitly declined — insert with subscribed: false, but don't overwrite existing
+          const { error: subError } = await supabaseAdmin
+            .from("email_subscribers")
+            .upsert(
+              {
+                email: customerEmail,
+                name: customerName,
+                subscribed: false,
+                source: "checkout",
+                updated_at: new Date().toISOString(),
+              },
+              {
+                onConflict: "email",
+                ignoreDuplicates: true,
+              }
+            );
+          if (subError) console.error("Error saving email opt-out:", subError);
+          else console.log("📧 Email opt-out recorded for:", customerEmail);
+        }
+      } catch (subError) {
+        console.error("Error handling email subscription:", subError);
+      }
+    }
+
     // Send ONE email with all QR codes
     try {
       await sendTicketEmail({
