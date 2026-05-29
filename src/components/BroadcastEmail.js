@@ -368,6 +368,7 @@ export default function BroadcastEmail({ events = [] }) {
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [results, setResults] = useState(null);
+  const [toastVisible, setToastVisible] = useState(false);
   const [error, setError] = useState("");
 
   const updateVar = (key, value) =>
@@ -451,6 +452,9 @@ export default function BroadcastEmail({ events = [] }) {
       }
 
       setResults(data);
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 4500);
+      setTimeout(() => setResults(null), 5000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -465,6 +469,23 @@ export default function BroadcastEmail({ events = [] }) {
 
   return (
     <div className="w-full">
+      {/* Toast notification */}
+      {results && (
+        <div
+          className="fixed top-20 right-6 z-50 p-4 bg-green-900/90 border border-green-500 rounded-lg shadow-lg backdrop-blur-sm"
+          style={{
+            transition: "opacity 500ms ease, transform 500ms ease",
+            opacity: toastVisible ? 1 : 0,
+            transform: toastVisible ? "translateY(0)" : "translateY(-8px)",
+          }}
+        >
+          <p className="text-green-400 font-medium">Broadcast complete!</p>
+          <p className="text-neutral-300 text-sm mt-1">
+            Sent: {results.sent} | Failed: {results.failed} | Total: {results.total}
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold">Email Blast</h2>
@@ -654,16 +675,6 @@ export default function BroadcastEmail({ events = [] }) {
                     Cancel
                   </button>
                 </div>
-              </div>
-            )}
-
-            {/* Results */}
-            {results && (
-              <div className="p-4 bg-green-900/20 border border-green-500 rounded">
-                <p className="text-green-400 font-medium">Broadcast complete!</p>
-                <p className="text-neutral-300 mt-1">
-                  Sent: {results.sent} | Failed: {results.failed} | Total: {results.total}
-                </p>
               </div>
             )}
 

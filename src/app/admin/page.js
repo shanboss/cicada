@@ -171,7 +171,7 @@ export default function AdminDashboard() {
     <div className="flex min-h-screen bg-neutral-900 text-neutral-300">
       <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="flex-1 mt-12 px-4 md:px-8 py-8 md:py-12 pb-20 md:pb-12 overflow-auto">
+      <main className="flex-1 mt-2 px-4 md:px-8 pt-2 md:pt-4 pb-20 md:pb-12 overflow-auto">
         {editingEvent && (
           <EditEvent
             event={editingEvent}

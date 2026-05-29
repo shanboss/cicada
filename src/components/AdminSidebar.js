@@ -23,12 +23,14 @@ export default function AdminSidebar({ activeTab, onTabChange }) {
     <>
       {/* Desktop sidebar */}
       <aside
-        className={`hidden md:block shrink-0 bg-neutral-800 border-r border-neutral-700 min-h-screen pt-20 px-3 transition-all duration-200 ${
+        className={`hidden md:block shrink-0 bg-neutral-800 border-r border-neutral-700 min-h-screen pt-2 px-3 transition-all duration-200 ${
           collapsed ? "w-16" : "w-56"
         }`}
       >
         {/* Collapse toggle */}
-        <div className={`flex mb-3 ${collapsed ? "justify-center" : "justify-end"}`}>
+        <div
+          className={`flex mb-3 ${collapsed ? "justify-center" : "justify-end"}`}
+        >
           <button
             onClick={() => setCollapsed((c) => !c)}
             className="p-1.5 rounded-md text-neutral-500 hover:text-neutral-300 hover:bg-neutral-700 transition-colors"

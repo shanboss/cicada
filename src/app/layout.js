@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="bg-black text-white font-monument antialiased pt-24">
+      <body className="bg-black text-white font-monument antialiased pt-[4.5rem]">
         <AuthProvider>
           <Navbar />
           <main>{children}</main>
